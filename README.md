@@ -226,8 +226,8 @@ MIT License - siehe LICENSE Datei
 
 ## 👤 Autor
 
-**uprisin6**
-**Claude Sonnet ;)**
+- **uprisin6**
+- **Claude Sonnet ;)**
 
 ## 🙏 Danksagungen
 
