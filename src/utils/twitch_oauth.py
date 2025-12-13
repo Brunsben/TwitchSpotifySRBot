@@ -131,8 +131,8 @@ class TwitchOAuth:
         server_thread = Thread(target=server.handle_request, daemon=True)
         server_thread.start()
         
-        # Open browser
-        webbrowser.open(auth_url)
+        # Open browser in background (new=2 = new tab, autoraise=False = don't steal focus)
+        webbrowser.open(auth_url, new=2, autoraise=False)
         
         # Wait for callback
         logger.info("Waiting for authorization... (timeout: 120s)")

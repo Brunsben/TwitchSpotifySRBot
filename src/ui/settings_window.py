@@ -86,7 +86,7 @@ class SettingsWindow(ctk.CTkToplevel):
             fg_color="#9146FF",
             hover_color="#772ce8",
             height=35,
-            command=lambda: webbrowser.open("https://dev.twitch.tv/console/apps")
+            command=lambda: webbrowser.open("https://dev.twitch.tv/console/apps", new=2, autoraise=False)
         ).pack(side="left", expand=True, padx=(0, 5))
         
         ctk.CTkButton(
@@ -162,7 +162,17 @@ class SettingsWindow(ctk.CTkToplevel):
             scroll,
             text="Spotify API Credentials",
             font=("Roboto", 16, "bold")
-        ).pack(pady=(10, 10))
+        ).pack(pady=(10, 5))
+        
+        # Spotify Developer Dashboard button
+        ctk.CTkButton(
+            scroll,
+            text="🔗 Spotify Developer Dashboard",
+            fg_color="#1DB954",
+            hover_color="#1ed760",
+            height=35,
+            command=lambda: webbrowser.open("https://developer.spotify.com/dashboard", new=2, autoraise=False)
+        ).pack(pady=(0, 10), padx=10, fill="x")
         
         self.entry_sp_id = self._create_input(
             scroll,
