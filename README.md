@@ -10,7 +10,8 @@ Moderner EventSub-basierter Twitch Song Request Bot mit Spotify-Integration. Zus
 ## ✨ Features
 
 - 🎤 **Song Requests**: Chat-basierte Song-Wünsche (`!sr`)
-- 🔐 **Berechtigungssystem**: 
+- �️ **Smart Voting**: Mehrfach gewünschte Songs steigen in der Queue auf
+- �🔐 **Berechtigungssystem**: 
   - Alle User
   - Nur Follower (mit Twitch API Verifikation)
   - Nur Subscriber
