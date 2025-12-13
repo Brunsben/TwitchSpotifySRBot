@@ -19,13 +19,17 @@ class TwitchBotService(commands.Bot):
     def __init__(
         self,
         config: TwitchConfig,
-        on_song_request: Callable[[str, str], str]
+        on_song_request: Callable[[str, str], str],
+        on_skip: Optional[Callable[[str], str]] = None,
+        on_current_song: Optional[Callable[[str], str]] = None
     ):
         """Initialize Twitch bot.
         
         Args:
             config: Twitch configuration
             on_song_request: Callback for song requests (query, username) -> response message
+            on_skip: Callback for skip command (username) -> response message
+            on_current_song: Callback for current song command (username) -> response message
         """
         # Extract token without oauth: prefix
         token = config.token
@@ -65,6 +69,8 @@ class TwitchBotService(commands.Bot):
         self.bot_config = config
         self.user_token = token
         self.on_song_request_callback = on_song_request
+        self.on_skip_callback = on_skip
+        self.on_current_song_callback = on_current_song
         self._running = False
         self._channel_id = None  # Will be set during setup
         self._follower_cache = {}  # Cache: {user_id: (is_follower, timestamp)}
@@ -298,6 +304,40 @@ class TwitchBotService(commands.Bot):
             except Exception as e:
                 logger.error(f"Error in song request handler:", exc_info=True)
                 await message.respond(f"@{username} Ein Fehler ist aufgetreten.")
+        
+        elif command_name == 'skip':
+            username = chatter_name
+            logger.info(f"!skip command from {username}")
+            
+            # Check if user is broadcaster or moderator
+            badges = {badge.set_id for badge in message.badges} if message.badges else set()
+            if "broadcaster" not in badges and "moderator" not in badges:
+                await message.respond(f"@{username} Nur Broadcaster und Moderatoren können Songs überspringen.")
+                return
+            
+            if self.on_skip_callback:
+                try:
+                    response = self.on_skip_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in skip handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Überspringen.")
+            else:
+                await message.respond(f"@{username} Skip-Funktion nicht verfügbar.")
+        
+        elif command_name == 'currentsong' or command_name == 'song':
+            username = chatter_name
+            logger.info(f"!{command_name} command from {username}")
+            
+            if self.on_current_song_callback:
+                try:
+                    response = self.on_current_song_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in current song handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Abrufen des aktuellen Songs.")
+            else:
+                await message.respond(f"@{username} Aktuelle Song-Funktion nicht verfügbar.")
     
     async def start_bot(self) -> None:
         """Start the Twitch bot."""

@@ -82,7 +82,9 @@ class BotOrchestrator:
         def run_bot():
             self.twitch_bot = TwitchBotService(
                 self.config.twitch,
-                self._handle_song_request_sync
+                self._handle_song_request_sync,
+                self._handle_skip_sync,
+                self._handle_current_song_sync
             )
             
             # Create new event loop for this thread
@@ -130,6 +132,53 @@ class BotOrchestrator:
         except Exception as e:
             logger.error(f"Error in song request handler:", exc_info=True)
             return t("chat.err_not_found", user=username)
+    
+    def _handle_skip_sync(self, username: str) -> str:
+        """Synchronous wrapper for skip command.
+        
+        Args:
+            username: User who executed the command
+        
+        Returns:
+            Response message for chat
+        """
+        if not self._main_loop:
+            logger.error("Main event loop not available")
+            return f"@{username} ⚠️ Fehler beim Überspringen."
+        
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                self.skip_current(),
+                self._main_loop
+            )
+            future.result(timeout=10)
+            
+            if self._current_track:
+                return f"@{username} ⏭️ Song übersprungen: {self._current_track.song.full_name}"
+            return f"@{username} ⏭️ Song übersprungen."
+            
+        except Exception as e:
+            logger.error(f"Error in skip handler:", exc_info=True)
+            return f"@{username} ⚠️ Fehler beim Überspringen."
+    
+    def _handle_current_song_sync(self, username: str) -> str:
+        """Synchronous wrapper for current song command.
+        
+        Args:
+            username: User who executed the command
+        
+        Returns:
+            Response message for chat
+        """
+        if not self._current_track:
+            return f"@{username} 🎵 Aktuell läuft kein Song aus der Queue."
+        
+        track = self._current_track
+        requesters = ", ".join(track.requesters[:3])  # Show max 3 requesters
+        if len(track.requesters) > 3:
+            requesters += f" (+{len(track.requesters) - 3} weitere)"
+        
+        return f"@{username} 🎵 Aktuell: {track.song.full_name} | Requested by: {requesters}"
     
     async def stop(self) -> None:
         """Stop the bot."""
