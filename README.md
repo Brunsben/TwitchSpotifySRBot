@@ -207,13 +207,8 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ## 👤 Autor
 
-<<<<<<< HEAD
 **uprisin6**  
 GitHub: [@Brunsben](https://github.com/Brunsben)
-=======
-- **uprisin6**
-- **Claude Sonnet ;)**
->>>>>>> 885a5122d97a7bb3e69cbcc19c7c3c59fda33895
 
 ## 🙏 Credits
 
