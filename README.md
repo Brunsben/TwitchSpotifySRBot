@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.1-green.svg)
+![Version](https://img.shields.io/badge/version-0.9.3-green.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -180,6 +180,17 @@ Details: [BUILD.md](BUILD.md)
 Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
+
+### v0.9.3 (2025-12-13)
+- ✨ Added !skip command (Broadcaster/Moderator only)
+- ✨ Added !currentsong / !song command (all users)
+- 🔒 Browser no longer steals focus during OAuth (prevents token leaks)
+- 🔗 Developer portal buttons in settings (Twitch & Spotify)
+- 🎯 Username mentions in command responses
+
+### v0.9.2 (2025-12-13)
+- 🎮 Initial implementation of new chat commands
+- 🐛 Bug fixes and improvements
 
 ### v0.9.1 (2025-12-13)
 - 🐛 Fixed PyInstaller resource paths
