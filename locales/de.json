@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "name": "Deutsch",
+    "code": "de"
+  },
+  "gui": {
+    "title": "Twitch SR Bot - v0.9",
+    "app_name": "Twitch SR Bot",
+    "status_online": "ONLINE",
+    "status_offline": "OFFLINE",
+    "btn_start": "STARTEN",
+    "btn_stop": "STOPPEN",
+    "btn_settings": "Einstellungen ⚙️",
+    "btn_help": "Hilfe & Anleitung 📖",
+    "switch_smart": "Smart Voting",
+    "header_now_playing": "A K T U E L L",
+    "np_waiting": "Warten auf Start...",
+    "header_queue": "Warteschlange",
+    "btn_clear": "Alle löschen 🗑",
+    "btn_force_play": "▶ Force Play",
+    "btn_skip": "⏭ Skip",
+    "stats_text": "({count} Tracks • ca. {min} Min)",
+    "card_req_by": "Von: {users} | {len}{votes}",
+    "restart_msg": "Bitte starte das Programm neu, um die Sprache zu ändern.",
+    "credits": "Dev: uprisin6 | v0.9.0"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "lbl_lang": "Sprache / Language",
+    "group_twitch": "Twitch Einrichtung",
+    "lbl_channel": "Dein Kanalname (Wo soll der Bot hin?)",
+    "desc_channel": "Der Name deines Twitch-Kanals (z.B. 'uprisin6').",
+    "lbl_token": "Twitch Chat Token (Wer schreibt?)",
+    "desc_token": "Token des Accounts, der im Chat antwortet.",
+    "lbl_permission": "Wer darf Songs wünschen?",
+    "perm_all": "Alle",
+    "perm_followers": "Nur Follower",
+    "perm_subscribers": "Nur Subscribers",
+    "group_spotify": "Spotify API Einrichtung",
+    "lbl_sp_id": "Spotify Client ID",
+    "lbl_sp_secret": "Spotify Client Secret",
+    "lbl_fallback": "Autopilot Playlist (Backup Musik)",
+    "desc_fallback": "Link zu einer ÖFFENTLICHEN Playlist kopieren.",
+    "group_rules": "Regeln & Limits",
+    "lbl_max_q": "Max. Songs in Warteschlange",
+    "lbl_max_user": "Max. Wünsche pro User",
+    "lbl_max_len": "Max. Länge (Minuten)",
+    "lbl_cooldown": "Cooldown pro Song (Minuten)",
+    "btn_save": "SPEICHERN & PRÜFEN",
+    "msg_saved": "Einstellungen gespeichert.",
+    "err_playlist_title": "Playlist Problem",
+    "err_playlist_body": "Die Autopilot-Playlist konnte nicht geladen werden.\nFehler: 404 Not Found.\n\nBitte stelle sicher, dass die Playlist 'Öffentlich' ist."
+  },
+  "chat": {
+    "ready": "Twitch Chat: {botname} ist bereit!",
+    "err_no_permission": "@{user} Du musst {requirement} sein, um Songs zu wünschen.",
+    "queue_full": "@{user} Die Warteschlange ist leider voll ({max} Songs).",
+    "limit_reached": "@{user} Du hast dein Song-Limit erreicht ({max} Songs parallel).",
+    "added_pos": "@{user} -> {song} hinzugefügt (Platz {pos}, ca. {wait} Min).",
+    "added_simple": "@{user} -> {song} zur Warteschlange hinzugefügt.",
+    "err_too_long": "@{user} Dieser Song ist zu lang (Max: {max} Min).",
+    "err_cooldown": "@{user} Dieser Song wurde vor Kurzem erst gespielt.",
+    "err_not_found": "@{user} Konnte den Song nicht finden. Prüfe Schreibweise oder Link.",
+    "voted": "@{user} +1 Vote für {song}! ({votes} Votes)"
+  },
+  "logs": {
+    "vote": "[VOTE] {name} (+1)",
+    "new_song": "[NEU] {name} ({user})",
+    "play": "[PLAY] {name}",
+    "queue": "[QUEUE] An Spotify gesendet: {name}",
+    "auto_start": "[AUTO] Fallback Track: {name}",
+    "auto_error": "[ERR] Autopilot Fehler ({count}/3): {err}",
+    "auto_stop": "[STOP] Autopilot deaktiviert (Playlist prüfen)."
+  },
+  "help": {
+    "title": "Hilfe & Dokumentation",
+    "btn_token": "Twitch Token holen 🔗",
+    "btn_dev": "Spotify Dashboard 🔗",
+    "text": "★ HILFE - V35 ★\n\nDies ist die offizielle Dokumentation für den Twitch Spotify Bot (Dev: uprisin6).\n\n1. ERSTE SCHRITTE\n- Klicke auf 'Einstellungen'.\n- Trage deinen Twitch Kanalnamen ein (kleingeschrieben).\n- Hole dir einen OAuth Token:\n  -> Gehe zu Twitch Developer Console\n  -> Erstelle eine Chat Bot App\n  -> Generiere einen Token mit 'chat:read' und 'chat:edit' Scopes\n  -> Oder nutze: twitch token -u -s 'chat:read chat:edit' (Twitch CLI)\n- Erstelle eine App im Spotify Dashboard, trage Client ID & Secret ein.\n\n2. AUTOPILOT (FALLBACK)\n- Erstelle eine Playlist auf Spotify.\n- Setze sie auf 'Öffentlich' (Wichtig!).\n- Kopiere den Link und füge ihn in den Einstellungen ein.\n- Wenn keine Wünsche mehr da sind, spielt der Bot daraus Songs.\n\n3. COMMANDS IM CHAT\n- !sr [Songname] -> Sucht und fügt Song hinzu.\n- !sr [Spotify Link] -> Fügt direkten Link hinzu.\n\nViel Spaß beim Streamen!"
+  }
+}

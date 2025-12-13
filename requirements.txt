@@ -1,0 +1,24 @@
+# Twitch Spotify Bot Dependencies
+
+# GUI
+customtkinter>=5.2.0
+
+# Spotify API
+spotipy>=2.23.0
+
+# Twitch Chat - Using TwitchIO 3.x with EventSub
+twitchio>=3.1.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Configuration & Validation
+pydantic>=2.0.0
+
+# Build
+pyinstaller>=6.0.0
+
+# Optional: Development
+black>=23.0.0
+mypy>=1.0.0
+pylint>=3.0.0

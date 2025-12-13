@@ -1,0 +1,64 @@
+# Logs directory
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Config files (keep template)
+config_premium.json
+config.json
+.cache
+.cache-*
+*.json.backup
+
+# Environment variables
+.env
+.env.local
+
+# TwitchIO token cache
+.tio.tokens.json
+
+# Migration scripts (already executed)
+migrate.py
+
+# Test files
+test_*.py
+*_test.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spotify token cache
+.spotify_cache
