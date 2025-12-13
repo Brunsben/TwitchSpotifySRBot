@@ -1,98 +1,71 @@
-# Twitch Spotify Bot 🎵
+# 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.0-green.svg)
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![Version](https://img.shields.io/badge/version-0.9.1-green.svg)
+![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-Ein moderner Twitch-Bot, der Song-Requests aus dem Twitch-Chat empfängt und über Spotify abspielt. Mit Warteschlange, Voting-System und Autopilot-Funktion.
+Moderner EventSub-basierter Twitch Song Request Bot mit Spotify-Integration. Zuschauer können Songs per Chat-Command wünschen, die automatisch zur Warteschlange hinzugefügt und abgespielt werden.
 
 ## ✨ Features
 
-- 🎵 **Song Requests**: Zuschauer können Songs per `!sr` Command anfordern
-- 📊 **Smart Voting**: Songs mit mehr Votes werden priorisiert
-- 🎯 **Queue Management**: Vollständige Kontrolle über die Warteschlange
-- 🤖 **Autopilot**: Spielt automatisch Songs aus einer Playlist, wenn die Queue leer ist
-- 🌍 **Multi-Language**: Deutsch & English
-- 🎨 **Moderne UI**: Dark Theme mit CustomTkinter
-- ⚙️ **Konfigurierbar**: Umfangreiche Einstellungsmöglichkeiten
+- 🎤 **Song Requests**: Chat-basierte Song-Wünsche (`!sr`)
+- 🔐 **Berechtigungssystem**: 
+  - Alle User
+  - Nur Follower (mit Twitch API Verifikation)
+  - Nur Subscriber
+- ⏱️ **Intelligente Limits**:
+  - Max. Queue-Größe
+  - Songs pro User
+  - Song-Länge
+  - Cooldown-System
+- 🎯 **Queue Management**: Live-Updates, Sortierung, Force Play
+- 🤖 **Autopilot**: Fallback-Playlist wenn Queue leer
+- 🌍 **Multi-Language**: Deutsch & Englisch
+- 🎨 **Moderne UI**: CustomTkinter mit Dark Theme
+- 📊 **Live-Logs**: Ein-/ausblendbare Debug-Informationen
+- 🔄 **EventSub WebSocket**: Moderne Twitch API (kein IRC)
 
-## 📋 Voraussetzungen
+## 🚀 Quick Start
 
-- Python 3.9 oder höher
-- Spotify Premium Account
-- Twitch Account für den Bot
-- Spotify Developer App
+### Option 1: Standalone Executable (Empfohlen)
 
-## 🚀 Installation
+1. Download `TwitchSRBot.exe` aus den [Releases](https://github.com/Brunsben/TwitchSpotifySRBot/releases)
+2. Starte die `.exe` - keine Installation nötig!
+3. Folge der [Installations-Anleitung](INSTALL.md)
 
-### 1. Repository klonen oder herunterladen
-
-```bash
-git clone https://github.com/yourusername/spotify-bot.git
-cd spotify-bot
-```
-
-### 2. Virtual Environment erstellen (empfohlen)
-
-```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-### 3. Dependencies installieren
+### Option 2: Python
 
 ```bash
+git clone https://github.com/Brunsben/TwitchSpotifySRBot.git
+cd TwitchSpotifySRBot
 pip install -r requirements.txt
-```
-
-## ⚙️ Konfiguration
-
-### Spotify App erstellen
-
-1. Gehe zu [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
-2. Erstelle eine neue App
-3. Notiere **Client ID** und **Client Secret**
-4. Füge `http://127.0.0.1:8888/callback` als Redirect URI hinzu
-
-### Twitch Token generieren
-
-1. Besuche [Twitch Token Generator](https://twitchapps.com/tmi/)
-2. Autorisiere den Bot-Account
-3. Kopiere den OAuth Token
-
-### Bot konfigurieren
-
-1. Starte die Anwendung: `python app.py`
-2. Klicke auf "Einstellungen ⚙️"
-3. Trage folgende Daten ein:
-   - **Twitch Kanal**: Dein Twitch-Kanalname (kleingeschrieben)
-   - **Token**: OAuth Token vom Generator
-   - **Spotify Client ID**: Von der Spotify Developer App
-   - **Spotify Client Secret**: Von der Spotify Developer App
-   - **Autopilot Playlist**: Link zu einer **öffentlichen** Spotify Playlist (optional)
-
-## 🎮 Verwendung
-
-### Bot starten
-
-```bash
 python app.py
 ```
 
-1. Klicke auf **"STARTEN"**
-2. Beim ersten Start: Spotify-Autorisierung im Browser
-3. Bot ist online und bereit! ✅
+## 📋 Voraussetzungen
+
+### Für Twitch
+- Twitch Developer App ([dev.twitch.tv/console](https://dev.twitch.tv/console))
+- OAuth Redirect URL: `http://localhost:3000`
+- Scopes: `user:read:chat`, `user:write:chat`, `user:bot`
+
+### Für Spotify
+- Spotify Premium Account
+- Spotify Developer App ([developer.spotify.com](https://developer.spotify.com/dashboard))
+- Redirect URI: `http://localhost:8888/callback`
+
+**Detaillierte Anleitung**: [INSTALL.md](INSTALL.md)
+
+## 🎮 Verwendung
 
 ### Chat Commands
 
 ```
-!sr [Songname]          # Song suchen und hinzufügen
-!sr [Spotify Link]      # Direkter Spotify Link
+!sr <Songname>          - Sucht und fügt Song hinzu
+!sr <Spotify-Link>      - Fügt Song direkt hinzu
+!currentsong            - Zeigt aktuellen Song
+!skip                   - Überspringt Song (nur Broadcaster/Mods)
 ```
 
 **Beispiele:**
@@ -101,140 +74,157 @@ python app.py
 !sr https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT
 ```
 
-### GUI Funktionen
+### GUI Bedienung
 
-- **Smart Voting**: Songs mit mehr Votes werden höher priorisiert
-- **▲/▼**: Songs manuell verschieben
-- **📌**: Song an Position fixieren (verhindert Auto-Sortierung)
-- **✕**: Song aus Queue entfernen
-- **🗑 Alle löschen**: Queue komplett leeren
-- **⏭ Skip**: Aktuellen Song überspringen
-- **▶ Force Play**: Nächsten Song sofort abspielen
+- **STARTEN/STOPPEN**: Bot-Verbindung steuern
+- **Force Play**: Ausgewählten Song sofort spielen
+- **Skip**: Aktuellen Song überspringen
+- **Alle löschen**: Queue komplett leeren
+- **🔍 Debug Log**: Technische Logs anzeigen/verbergen
 
-## 📁 Projektstruktur
+## 🏗️ Architektur
 
 ```
-SpotifyBot/
-├── app.py                      # Haupteinstiegspunkt
-├── requirements.txt            # Python-Dependencies
-├── pyproject.toml             # Projekt-Konfiguration
-├── README.md                  # Diese Datei
-│
+TwitchSpotifySRBot/
+├── app.py                    # Einstiegspunkt
+├── requirements.txt          # Dependencies
 ├── src/
-│   ├── models/                # Datenmodelle
-│   │   ├── song.py           # Song & QueueItem
-│   │   └── config.py         # Konfigurationsmodelle
-│   │
-│   ├── services/              # Business Logic
-│   │   ├── spotify_service.py    # Spotify API
-│   │   ├── twitch_service.py     # Twitch Bot
-│   │   ├── queue_manager.py      # Warteschlangen-Logik
-│   │   └── bot_orchestrator.py   # Haupt-Koordinator
-│   │
-│   ├── ui/                    # GUI-Komponenten
-│   │   ├── main_window.py    # Hauptfenster
-│   │   ├── settings_window.py # Einstellungen
-│   │   └── help_window.py    # Hilfe-Dialog
-│   │
-│   └── utils/                 # Hilfsfunktionen
-│       ├── config_manager.py  # Config laden/speichern
-│       ├── logging_config.py  # Logging-Setup
-│       └── i18n.py           # Mehrsprachigkeit
-│
-├── locales/                   # Sprachdateien
-│   ├── de.json               # Deutsch
-│   └── en.json               # English
-│
-└── logs/                      # Log-Dateien (automatisch erstellt)
+│   ├── constants.py         # Version & Metadaten
+│   ├── models/              # Datenmodelle (Pydantic)
+│   │   ├── config.py       # Konfiguration
+│   │   └── song.py         # Song & Queue Items
+│   ├── services/            # Business Logic
+│   │   ├── twitch_service.py      # TwitchIO 3.x EventSub
+│   │   ├── spotify_service.py     # Spotify Web API
+│   │   ├── queue_manager.py       # Queue-Logik
+│   │   └── bot_orchestrator.py    # Koordination
+│   ├── ui/                  # GUI (CustomTkinter)
+│   │   ├── main_window.py
+│   │   ├── settings_window.py
+│   │   └── help_window.py
+│   └── utils/               # Hilfsfunktionen
+│       ├── config_manager.py
+│       ├── i18n.py
+│       ├── logging_config.py
+│       └── twitch_oauth.py
+└── locales/                 # Übersetzungen (DE/EN)
 ```
 
-## 🔧 Konfigurationsoptionen
+## 🔧 Einstellungen
+
+### Berechtigungen
+- **Alle**: Jeder kann Songs wünschen
+- **Nur Follower**: Twitch API prüft Follower-Status (5 Min. Cache)
+- **Nur Subscriber**: Nur Subs dürfen Requests machen
 
 ### Regeln & Limits
+- **Max. Queue**: Warteschlangengröße (z.B. 10)
+- **Max. pro User**: Songs gleichzeitig pro User (z.B. 2)
+- **Max. Länge**: Song-Dauer in Minuten (z.B. 8)
+- **Cooldown**: Minuten bis Song erneut gewünscht werden kann (z.B. 30)
 
-- **Max. Songs in Queue**: Maximale Anzahl gleichzeitiger Songs (Standard: 20)
-- **Max. Wünsche pro User**: Songs pro Zuschauer in Queue (Standard: 3)
-- **Max. Länge**: Maximale Song-Länge in Minuten (Standard: 10)
-- **Cooldown**: Wartezeit in Minuten bis Song erneut gespielt werden kann (Standard: 30)
+### Autopilot
+- **Zweck**: Spielt Musik wenn Queue leer
+- **Setup**: Link zu **öffentlicher** Spotify Playlist
+- Wechselt automatisch zwischen Requests und Autopilot
 
-## 🛠️ Entwicklung
+## 🔬 Technologie
 
-### Code-Stil
+- **Python 3.13**: Moderne Features & Performance
+- **TwitchIO 3.1.0**: EventSub WebSocket API (moderne Architektur)
+- **Spotipy 2.23.0**: Spotify Web API
+- **CustomTkinter**: Modernes GUI Framework
+- **Pydantic 2.0**: Type-Safe Konfiguration
+- **PyInstaller**: Standalone Executables
+
+### Was ist EventSub?
+
+TwitchIO 3.x nutzt **EventSub über WebSocket** statt IRC:
+- ✅ Offizielle Twitch API
+- ✅ Moderne OAuth2-Authentifizierung
+- ✅ Bessere Skalierbarkeit
+- ✅ Echtzeit-Events
+- ❌ Kein IRC mehr
+
+## 🔨 Build von Source
 
 ```bash
-# Code formatieren
-black src/
+# PyInstaller installieren
+pip install pyinstaller
 
-# Type Checking
-mypy src/
+# Executable bauen
+python build.py
 
-# Linting
-pylint src/
+# Output: dist/TwitchSRBot.exe
 ```
 
-### Architektur
-
-Das Projekt folgt modernen Python-Best-Practices:
-
-- **Type Hints**: Vollständige Type Annotations
-- **Async/Await**: Asynchrone Operationen für bessere Performance
-- **Pydantic**: Config-Validation und Settings-Management
-- **Dataclasses**: Saubere Datenmodelle
-- **Logging**: Professional logging mit Rotation
-- **Separation of Concerns**: Klare Trennung von GUI, Business Logic und Services
+Details: [BUILD.md](BUILD.md)
 
 ## 🐛 Troubleshooting
 
-### Bot verbindet nicht
+### Bot empfängt keine Nachrichten
+- ✅ Prüfe OAuth Scopes (`user:read:chat`, `user:write:chat`, `user:bot`)
+- ✅ Erstelle neuen Token mit korrekten Scopes
+- ✅ TwitchIO 3.x benötigt EventSub-Authentifizierung
 
-- ✅ Überprüfe Token und Credentials
-- ✅ Stelle sicher, dass Spotify läuft
-- ✅ Prüfe Internet-Verbindung
+### Follower-Check funktioniert nicht
+- ✅ Twitch App benötigt zusätzliche Permissions
+- ✅ Cache wird alle 5 Minuten aktualisiert
+- ✅ Prüfe Logs für API-Fehler
 
-### Autopilot funktioniert nicht
+### Autopilot spielt nicht
+- ✅ Playlist muss **ÖFFENTLICH** sein
+- ✅ Spotify muss aktiv sein (auf irgendeinem Gerät)
+- ✅ Premium Account erforderlich
 
-- ✅ Playlist muss **"Öffentlich"** sein
-- ✅ Korrekte Playlist-ID in Einstellungen
-- ✅ Überprüfe Logs auf Fehler
-
-### Songs werden nicht gespielt
-
-- ✅ Spotify Premium Account erforderlich
-- ✅ Spotify muss auf einem Gerät aktiv sein
-- ✅ Device-ID wird automatisch erkannt
+Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
 
-### Version 35.0 (Refactored)
+### v0.9.1 (2025-12-13)
+- 🐛 Fixed PyInstaller resource paths
+- 📖 Comprehensive help documentation
+- ✅ All locales load correctly in .exe
 
-- ✨ Komplett modernisierte Code-Basis
-- 🏗️ Modulare Architektur mit Services
-- 📦 Pydantic für Config-Management
-- 🔄 Async/Await durchgängig
-- 📊 Type Hints überall
-- 📝 Professional Logging
-- 🌍 Verbessertes I18N-System
-- 🎨 Optimierte GUI-Struktur
+### v0.9.0 (2025-12-13)
+- ✨ Complete refactor from monolithic to modular architecture
+- 🔄 Migration to TwitchIO 3.x EventSub
+- 🔐 Permission system (all/followers/subscribers)
+- 🌐 Follower API integration with caching
+- 🎨 Tab-based settings UI
+- 📊 Toggle-able debug logs
+- 🌍 Multi-language support
+- 🏗️ Modern async architecture
+- 📦 PyInstaller build system
 
-### Version 34.0 (Legacy)
-
-- Original Monolith-Version
+### Legacy (Pre-v0.9.0)
+- Original monolithic implementation
+- TwitchIO 2.x IRC-based
 
 ## 📄 Lizenz
 
-MIT License - siehe LICENSE Datei
+MIT License - siehe [LICENSE](LICENSE)
 
 ## 👤 Autor
 
-**uprisin6**
+**uprisin6**  
+GitHub: [@Brunsben](https://github.com/Brunsben)
 
-## 🙏 Danksagungen
+## 🙏 Credits
 
-- Spotify Web API
-- TwitchIO
-- CustomTkinter
-- Pydantic
+- [TwitchIO](https://github.com/TwitchIO/TwitchIO) - EventSub WebSocket Integration
+- [Spotipy](https://github.com/spotipy-dev/spotipy) - Spotify Web API
+- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) - Modern GUI
+- [Pydantic](https://github.com/pydantic/pydantic) - Data Validation
+
+## 🔗 Links
+
+- 📦 [Releases](https://github.com/Brunsben/TwitchSpotifySRBot/releases)
+- 📖 [Installation Guide](INSTALL.md)
+- 🔨 [Build Instructions](BUILD.md)
+- 🐛 [Troubleshooting](TROUBLESHOOTING.md)
+- 🔄 [Migration from Legacy](MIGRATION.md)
 
 ---
 
-**Viel Spaß beim Streamen! 🎉**
+**Viel Spaß beim Streamen! 🎵**
