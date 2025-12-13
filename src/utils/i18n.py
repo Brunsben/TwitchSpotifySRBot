@@ -1,27 +1,46 @@
 """Internationalization support."""
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
 
+def get_resource_path(relative_path: str) -> Path:
+    """Get absolute path to resource, works for dev and PyInstaller."""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = Path(sys._MEIPASS)
+    except AttributeError:
+        # Running in normal Python environment
+        base_path = Path(__file__).parent.parent.parent
+    
+    return base_path / relative_path
+
+
 class I18n:
     """Internationalization manager for multi-language support."""
     
-    def __init__(self, locales_dir: Path = Path("locales")):
+    def __init__(self, locales_dir: Optional[Path] = None):
         """Initialize I18n manager.
         
         Args:
             locales_dir: Directory containing language JSON files
         """
-        self.locales_dir = locales_dir
+        if locales_dir is None:
+            # Use resource path for PyInstaller compatibility
+            self.locales_dir = get_resource_path("locales")
+        else:
+            self.locales_dir = locales_dir
+        
         self._translations: Dict[str, Any] = {}
         self._current_language = "de"
         
-        # Ensure locales directory exists
-        self.locales_dir.mkdir(exist_ok=True)
+        # Don't create directory in PyInstaller mode
+        if not hasattr(sys, '_MEIPASS'):
+            self.locales_dir.mkdir(exist_ok=True)
     
     def load_language(self, language: str) -> bool:
         """Load language translations.
