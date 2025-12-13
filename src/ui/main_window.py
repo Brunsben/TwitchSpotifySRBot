@@ -267,6 +267,16 @@ class BotGUI(ctk.CTk):
             fg_color="transparent"
         )
         self.scroll_queue.grid(row=2, column=0, sticky="nsew")
+        
+        # Debug log box (row 3, hidden by default)
+        self.log_box = ctk.CTkTextbox(
+            self.frame_main,
+            height=150,
+            fg_color="#111",
+            text_color="#0f0",
+            font=("Consolas", 9)
+        )
+        # Don't grid it initially - hidden by default
     
     def _setup_control_bar(self):
         """Setup bottom control bar."""
@@ -278,17 +288,6 @@ class BotGUI(ctk.CTk):
         )
         self.frame_controls.grid(row=1, column=1, sticky="ew")
         self.frame_controls.grid_propagate(False)
-        
-        # Log box (hidden by default)
-        self.log_box = ctk.CTkTextbox(
-            self.frame_controls,
-            height=60,
-            width=450,
-            fg_color="#111",
-            text_color="#888",
-            font=("Consolas", 10)
-        )
-        # Don't pack it initially - hidden by default
         
         # Control buttons frame (centered)
         ctrl_frame = ctk.CTkFrame(self.frame_controls, fg_color="transparent")
@@ -598,10 +597,10 @@ class BotGUI(ctk.CTk):
         self.debug_visible = not self.debug_visible
         
         if self.debug_visible:
-            self.log_box.pack(side="left", padx=30, pady=10, before=self.frame_controls.winfo_children()[0])
+            self.log_box.grid(row=3, column=0, sticky="ew", padx=15, pady=(0, 10))
             self.btn_debug.configure(fg_color="#1DB954", text="✔ Debug Log")
         else:
-            self.log_box.pack_forget()
+            self.log_box.grid_forget()
             self.btn_debug.configure(fg_color="#222", text="🔍 Debug Log")
     
     def _log_to_gui(self, message: str):
