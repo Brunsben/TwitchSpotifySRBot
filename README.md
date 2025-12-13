@@ -7,6 +7,8 @@
 
 Moderner EventSub-basierter Twitch Song Request Bot mit Spotify-Integration. Zuschauer können Songs per Chat-Command wünschen, die automatisch zur Warteschlange hinzugefügt und abgespielt werden.
 
+> **⚠️ WICHTIG:** Für die Steuerung der Spotify-Wiedergabe wird ein **Spotify Premium Account** benötigt!
+
 ## ✨ Features
 
 - 🎤 **Song Requests**: Chat-basierte Song-Wünsche (`!sr`)
@@ -52,7 +54,7 @@ python app.py
 - Scopes: `user:read:chat`, `user:write:chat`, `user:bot`
 
 ### Für Spotify
-- Spotify Premium Account
+- **Spotify Premium Account** (erforderlich für Playback-Steuerung!)
 - Spotify Developer App ([developer.spotify.com](https://developer.spotify.com/dashboard))
 - Redirect URI: `http://localhost:8888/callback`
 
