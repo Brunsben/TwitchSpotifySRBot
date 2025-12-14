@@ -52,7 +52,8 @@ class SpotifyService:
                 client_id=self.config.client_id,
                 client_secret=self.config.client_secret,
                 redirect_uri=self.config.redirect_uri,
-                scope=scope
+                scope=scope,
+                open_browser=False  # Don't steal focus when opening browser
             )
             
             # Run in executor to avoid blocking
