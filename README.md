@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.5-green.svg)
+![Version](https://img.shields.io/badge/version-0.9.6-green.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -183,6 +183,11 @@ Details: [BUILD.md](BUILD.md)
 Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
+
+### v0.9.6 (2025-12-14)
+- 🐛 Fixed 'lost sys.stdin' error in PyInstaller builds
+- ✅ Improved graceful shutdown when closing app while bot is running
+- 🔧 Better async cleanup and error handling on exit
 
 ### v0.9.5 (2025-12-14)
 - 🐛 Fixed browser window stealing focus on bot startup
