@@ -208,6 +208,13 @@ class SpotifyService:
                 device_id=current.get('device', {}).get('id')
             )
             
+        except OSError as e:
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" in str(e):
+                logger.debug("No playback state available (running as .exe)")
+            else:
+                logger.error(f"Error getting playback state: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error getting playback state: {e}")
             return None
