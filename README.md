@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.7-green.svg)
+![Version](https://img.shields.io/badge/version-0.9.8-green.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -28,6 +28,8 @@ Moderner EventSub-basierter Twitch Song Request Bot mit Spotify-Integration. Zus
 - 🎨 **Moderne UI**: CustomTkinter mit Dark Theme
 - 📊 **Live-Logs**: Ein-/ausblendbare Debug-Informationen
 - 🔄 **EventSub WebSocket**: Moderne Twitch API (kein IRC)
+- 📈 **Song Statistics**: Detaillierte Tracking-Daten mit Top Songs/Requesters/Artists
+- 🎥 **OBS Overlay**: Integriertes Browser-Source Overlay für Streams
 
 ## 🚀 Quick Start
 
@@ -183,6 +185,22 @@ Details: [BUILD.md](BUILD.md)
 Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
+
+### v0.9.8 (2025-12-15)
+- 📊 **NEW**: Song History & Statistics tracking system
+  - Track all played songs with timestamps and requesters
+  - Top Songs, Top Requesters, Top Artists tabs
+  - Time filtering (All Time, Last 7 Days, Last 30 Days)
+  - CSV/JSON export functionality
+  - Statistics overview with skip rate and autopilot percentage
+- 🎥 **NEW**: OBS Overlay for streaming
+  - Real-time WebSocket-based overlay at http://localhost:8080
+  - Shows current song with cover art, artist, and requester
+  - Beautiful gradient design (Twitch purple to Spotify green)
+  - Smooth animations for song changes
+  - Easy OBS Browser Source setup
+- 🖼️ Cover art now displayed in overlay
+- 🔧 Internal: Song model extended with cover_url field
 
 ### v0.9.7 (2025-12-14)
 - ✨ New custom icon with Twitch + Spotify branding (purple & green)

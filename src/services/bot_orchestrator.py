@@ -9,6 +9,8 @@ from ..models.song import Song, QueueItem
 from ..services.spotify_service import SpotifyService, PlaybackState
 from ..services.twitch_service import TwitchBotService
 from ..services.queue_manager import QueueManager, RequestResult
+from ..services.history_manager import HistoryManager
+from ..services.obs_overlay import OBSOverlayServer
 from ..utils.i18n import t
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,8 @@ class BotOrchestrator:
         # Services
         self.spotify = SpotifyService(config.spotify)
         self.queue_manager = QueueManager(config.rules, config.smart_voting_enabled)
+        self.history_manager = HistoryManager()
+        self.obs_overlay = OBSOverlayServer(port=8080)
         self.twitch_bot: Optional[TwitchBotService] = None
         
         # State
@@ -61,6 +65,9 @@ class BotOrchestrator:
             
             # Connect to Spotify
             await self.spotify.connect()
+            
+            # Start OBS overlay server
+            await self.obs_overlay.start()
             
             # Start playback loop
             self._running = True
@@ -205,11 +212,19 @@ class BotOrchestrator:
             except Exception as e:
                 logger.error(f"Error stopping Twitch bot: {e}")
         
+        # Stop OBS overlay server
+        await self.obs_overlay.stop()
+        
         logger.info("Bot orchestrator stopped")
         self._notify_update()
     
     async def skip_current(self) -> None:
         """Skip current track."""
+        # Mark current track as skipped in history
+        if self._current_track:
+            requester = self._current_track.requesters[0] if self._current_track.requesters else "Unknown"
+            self.history_manager.add_entry(self._current_track.song, requester, was_skipped=True)
+        
         await self.spotify.skip_track()
         logger.info("Skipped current track")
     
@@ -359,6 +374,18 @@ class BotOrchestrator:
             if force_start:
                 await self.spotify.start_playback(item.uri)
                 logger.info(f"Started playback: {item.song.full_name}")
+                
+                # Track in history
+                requester = item.requesters[0] if item.requesters else "Unknown"
+                self.history_manager.add_entry(item.song, requester)
+                
+                # Update OBS overlay
+                await self.obs_overlay.update_song(
+                    title=item.song.name,
+                    artist=item.song.artist,
+                    requester=requester,
+                    cover_url=item.song.cover_url
+                )
             else:
                 await self.spotify.add_to_queue(item.uri)
                 logger.info(f"Added to Spotify queue: {item.song.full_name}")
@@ -392,6 +419,17 @@ class BotOrchestrator:
                 votes=0,
                 requesters=["🤖 Autopilot"],
                 is_manual=False
+            )
+            
+            # Track autopilot in history
+            self.history_manager.add_entry(song, "Autopilot")
+            
+            # Update OBS overlay
+            await self.obs_overlay.update_song(
+                title=song.name,
+                artist=song.artist,
+                requester="🤖 Autopilot",
+                cover_url=song.cover_url
             )
             
             logger.info(f"Playing fallback track: {song.full_name}")

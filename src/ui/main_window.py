@@ -162,6 +162,28 @@ class BotGUI(ctk.CTk):
             command=self._open_settings
         ).pack(fill="x", padx=30, pady=10)
         
+        # Stats button
+        ctk.CTkButton(
+            self.frame_side,
+            text="📊 Statistics",
+            fg_color="#333",
+            hover_color="#444",
+            font=("Roboto", 14),
+            height=40,
+            command=self._open_stats
+        ).pack(fill="x", padx=30, pady=10)
+        
+        # OBS Overlay button
+        ctk.CTkButton(
+            self.frame_side,
+            text="🎥 OBS Overlay",
+            fg_color="#333",
+            hover_color="#444",
+            font=("Roboto", 14),
+            height=40,
+            command=self._open_obs_overlay
+        ).pack(fill="x", padx=30, pady=10)
+        
         # Help button
         ctk.CTkButton(
             self.frame_side,
@@ -609,6 +631,51 @@ class BotGUI(ctk.CTk):
             return
         
         self._help_window = HelpWindow(self)
+    
+    def _open_stats(self):
+        """Open statistics window."""
+        from .stats_window import StatsWindow
+        
+        if hasattr(self, '_stats_window') and self._stats_window and self._stats_window.winfo_exists():
+            self._stats_window.lift()
+            return
+        
+        if self.bot:
+            self._stats_window = StatsWindow(self, self.bot.history_manager)
+        else:
+            logger.warning("Bot not initialized, cannot open stats")
+    
+    def _open_obs_overlay(self):
+        """Show OBS overlay information dialog."""
+        from tkinter import messagebox
+        
+        overlay_url = "http://localhost:8080"
+        
+        info_text = (
+            "🎥 OBS Overlay Setup\n\n"
+            f"Overlay URL: {overlay_url}\n\n"
+            "Setup instructions:\n"
+            "1. Open OBS Studio\n"
+            "2. Add new 'Browser' source\n"
+            f"3. Enter URL: {overlay_url}\n"
+            "4. Set width to 800 and height to 150\n"
+            "5. Enable 'Shutdown source when not visible'\n"
+            "6. Enable 'Refresh browser when scene becomes active'\n\n"
+            "The overlay will show the current song with cover art,\n"
+            "song name, artist, and requester.\n\n"
+            "Note: Bot must be running for overlay to work!"
+        )
+        
+        # Show dialog and copy URL to clipboard
+        result = messagebox.showinfo("OBS Overlay", info_text)
+        
+        # Copy URL to clipboard
+        try:
+            self.clipboard_clear()
+            self.clipboard_append(overlay_url)
+            logger.info("Overlay URL copied to clipboard")
+        except Exception as e:
+            logger.error(f"Failed to copy to clipboard: {e}")
     
     def _toggle_debug(self):
         """Toggle debug log visibility."""

@@ -160,7 +160,8 @@ class SpotifyService:
                 name=track['name'],
                 uri=track['uri'],
                 duration_ms=track['duration_ms'],
-                artist=track['artists'][0]['name']
+                artist=track['artists'][0]['name'],
+                cover_url=track['album']['images'][0]['url'] if track['album']['images'] else ""
             )
             
         except Exception as e:
@@ -348,7 +349,8 @@ class SpotifyService:
                 name=track['name'],
                 uri=track['uri'],
                 duration_ms=track['duration_ms'],
-                artist=track['artists'][0]['name']
+                artist=track['artists'][0]['name'],
+                cover_url=track['album']['images'][0]['url'] if track['album']['images'] else ""
             )
             
             logger.info(f"Selected fallback track: {song.full_name}")
