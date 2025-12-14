@@ -165,7 +165,9 @@ class SpotifyService:
             )
             
         except Exception as e:
-            logger.error(f"Error searching track '{query}': {e}", exc_info=True)
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error searching track '{query}': {e}", exc_info=True)
             return None
     
     async def get_playback_state(self) -> Optional[PlaybackState]:
@@ -243,8 +245,10 @@ class SpotifyService:
             logger.info(f"Started playback: {track_uri}")
             
         except Exception as e:
-            logger.error(f"Error starting playback: {e}")
-            raise
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error starting playback: {e}")
+                raise
     
     async def add_to_queue(self, track_uri: str) -> None:
         """Add a track to the queue.
@@ -267,8 +271,10 @@ class SpotifyService:
             logger.debug(f"Added to queue: {track_uri}")
             
         except Exception as e:
-            logger.error(f"Error adding to queue: {e}")
-            raise
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error adding to queue: {e}")
+                raise
     
     async def skip_track(self) -> None:
         """Skip current track."""
@@ -284,7 +290,9 @@ class SpotifyService:
             logger.info("Skipped track")
             
         except Exception as e:
-            logger.error(f"Error skipping track: {e}")
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error skipping track: {e}")
     
     async def get_random_fallback_track(self) -> Optional[Song]:
         """Get a random track from the fallback playlist.
@@ -337,7 +345,9 @@ class SpotifyService:
             )
             
         except Exception as e:
-            logger.error(f"Error getting fallback track: {e}")
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error getting fallback track: {e}")
             return None
     
     async def validate_playlist(self, playlist_id: str) -> bool:
@@ -362,5 +372,7 @@ class SpotifyService:
             return True
             
         except Exception as e:
-            logger.error(f"Invalid playlist {playlist_id}: {e}")
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error validating playlist: {e}")
             return False
