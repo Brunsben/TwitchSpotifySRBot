@@ -185,6 +185,7 @@ class BotOrchestrator:
         if not self._running:
             return
         
+        logger.info("Stopping bot orchestrator...")
         self._running = False
         
         # Cancel playback loop
@@ -193,9 +194,18 @@ class BotOrchestrator:
             try:
                 await self._playback_loop_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Playback loop cancelled")
         
-        logger.info("Bot stopped")
+        # Stop Twitch bot
+        if self.twitch_bot:
+            try:
+                logger.info("Stopping Twitch bot...")
+                await self.twitch_bot.close()
+                logger.info("Twitch bot stopped")
+            except Exception as e:
+                logger.error(f"Error stopping Twitch bot: {e}")
+        
+        logger.info("Bot orchestrator stopped")
         self._notify_update()
     
     async def skip_current(self) -> None:

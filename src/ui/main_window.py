@@ -628,21 +628,33 @@ class BotGUI(ctk.CTk):
     
     def _on_close(self):
         """Handle window close."""
+        logger.info("Closing application...")
+        
         # Stop bot if running
         if self.bot and self.bot.is_running:
-            if self.loop:
+            logger.info("Stopping bot...")
+            if self.loop and self.loop.is_running():
                 future = asyncio.run_coroutine_threadsafe(self.bot.stop(), self.loop)
                 try:
-                    future.result(timeout=5)
+                    future.result(timeout=10)
+                    logger.info("Bot stopped successfully")
                 except Exception as e:
                     logger.error(f"Error stopping bot: {e}")
         
         # Save config
         self.config_manager.save(self.config)
         
-        # Stop event loop
-        if self.loop:
+        # Stop event loop gracefully
+        if self.loop and self.loop.is_running():
+            logger.info("Stopping event loop...")
             self.loop.call_soon_threadsafe(self.loop.stop)
+            
+            # Wait for loop thread to finish
+            if self.loop_thread and self.loop_thread.is_alive():
+                self.loop_thread.join(timeout=2)
         
+        # Destroy GUI
         self.destroy()
-        sys.exit()
+        
+        logger.info("Application closed")
+        sys.exit(0)
