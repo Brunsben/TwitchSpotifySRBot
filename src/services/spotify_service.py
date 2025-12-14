@@ -214,7 +214,13 @@ class SpotifyService:
             # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
             if "lost sys.stdin" not in str(e):
                 logger.error(f"Error getting playback state: {e}")
-            return None
+            # Return default state instead of None to allow autopilot to work
+            return PlaybackState(
+                is_playing=False,
+                current_track=None,
+                progress_ms=0,
+                device_id=self._device_id
+            )
     
     async def start_playback(self, track_uri: str) -> None:
         """Start playing a track immediately.
