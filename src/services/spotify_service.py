@@ -64,7 +64,8 @@ class SpotifyService:
                 client_secret=self.config.client_secret,
                 redirect_uri=self.config.redirect_uri,
                 scope=scope,
-                open_browser=False  # Don't steal focus when opening browser
+                open_browser=False,  # Don't steal focus when opening browser
+                cache_handler=None  # Disable cache to prevent sys.stdin errors in .exe
             )
             
             # Run in executor to avoid blocking
