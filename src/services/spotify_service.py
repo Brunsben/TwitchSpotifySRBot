@@ -106,7 +106,9 @@ class SpotifyService:
             logger.info(f"Using device: {devices['devices'][0].get('name')}")
             
         except Exception as e:
-            logger.error(f"Error refreshing device: {e}")
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error refreshing device: {e}")
     
     async def search_track(self, query: str) -> Optional[Song]:
         """Search for a track on Spotify.
@@ -208,15 +210,10 @@ class SpotifyService:
                 device_id=current.get('device', {}).get('id')
             )
             
-        except OSError as e:
-            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
-            if "lost sys.stdin" in str(e):
-                logger.debug("No playback state available (running as .exe)")
-            else:
-                logger.error(f"Error getting playback state: {e}")
-            return None
         except Exception as e:
-            logger.error(f"Error getting playback state: {e}")
+            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error getting playback state: {e}")
             return None
     
     async def start_playback(self, track_uri: str) -> None:
