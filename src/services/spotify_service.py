@@ -2,7 +2,9 @@
 import asyncio
 import logging
 import random
+import sys
 import webbrowser
+from io import StringIO
 from typing import Optional, List, Dict
 from dataclasses import dataclass
 
@@ -13,6 +15,11 @@ from ..models.song import Song
 from ..models.config import SpotifyConfig
 
 logger = logging.getLogger(__name__)
+
+# Mock sys.stdin for PyInstaller .exe builds to prevent "lost sys.stdin" errors
+if not hasattr(sys.stdin, 'read'):
+    sys.stdin = StringIO()
+    logger.debug("Mocked sys.stdin for PyInstaller build")
 
 # Patch webbrowser.open to never steal focus
 # This prevents Spotify OAuth from stealing focus during authentication
