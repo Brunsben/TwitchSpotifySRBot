@@ -13,6 +13,7 @@ import customtkinter as ctk
 
 from ..models.config import BotConfig
 from ..services.bot_orchestrator import BotOrchestrator
+from ..services.history_manager import HistoryManager
 from ..utils.config_manager import ConfigManager
 from ..utils.i18n import get_i18n, t
 from ..utils.logging_config import GUILogHandler
@@ -74,6 +75,9 @@ class BotGUI(ctk.CTk):
         # Bot orchestrator
         self.bot: Optional[BotOrchestrator] = None
         self.smart_voting_var = ctk.BooleanVar(value=self.config.smart_voting_enabled)
+        
+        # History manager (independent of bot, for stats)
+        self.history_manager = HistoryManager()
         
         # Event loop for async operations (runs in background thread)
         self.loop = None
@@ -375,7 +379,7 @@ class BotGUI(ctk.CTk):
     async def _start_bot(self):
         """Start the bot."""
         try:
-            self.bot = BotOrchestrator(self.config, on_update=self._update_ui)
+            self.bot = BotOrchestrator(self.config, on_update=self._update_ui, history_manager=self.history_manager)
             await self.bot.start()
             
             # Update UI
@@ -640,10 +644,8 @@ class BotGUI(ctk.CTk):
             self._stats_window.lift()
             return
         
-        if self.bot:
-            self._stats_window = StatsWindow(self, self.bot.history_manager)
-        else:
-            logger.warning("Bot not initialized, cannot open stats")
+        # Use shared history manager (works even when bot is not running)
+        self._stats_window = StatsWindow(self, self.history_manager)
     
     def _open_obs_overlay(self):
         """Show OBS overlay information dialog."""

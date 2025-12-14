@@ -19,12 +19,13 @@ logger = logging.getLogger(__name__)
 class BotOrchestrator:
     """Main bot orchestrator coordinating Spotify, Twitch, and Queue services."""
     
-    def __init__(self, config: BotConfig, on_update: Optional[Callable] = None):
+    def __init__(self, config: BotConfig, on_update: Optional[Callable] = None, history_manager: Optional[HistoryManager] = None):
         """Initialize bot orchestrator.
         
         Args:
             config: Bot configuration
             on_update: Callback when state changes (for UI updates)
+            history_manager: Optional shared history manager (if None, creates new one)
         """
         self.config = config
         self.on_update = on_update
@@ -32,7 +33,7 @@ class BotOrchestrator:
         # Services
         self.spotify = SpotifyService(config.spotify)
         self.queue_manager = QueueManager(config.rules, config.smart_voting_enabled)
-        self.history_manager = HistoryManager()
+        self.history_manager = history_manager if history_manager else HistoryManager()
         self.obs_overlay = OBSOverlayServer(port=8080)
         self.twitch_bot: Optional[TwitchBotService] = None
         

@@ -4,7 +4,7 @@
     "code": "en"
   },
   "gui": {
-    "title": "Twitch SR Bot - v0.9",
+    "title": "Twitch SR Bot - v{VERSION}",
     "app_name": "Twitch SR Bot",
     "status_online": "ONLINE",
     "status_offline": "OFFLINE",
@@ -22,7 +22,7 @@
     "stats_text": "({count} Tracks • approx. {min} Min)",
     "card_req_by": "By: {users} | {len}{votes}",
     "restart_msg": "Please restart the application to change the language.",
-    "credits": "Dev: uprisin6 | v0.9.4"
+    "credits": "Dev: {AUTHOR} | v{VERSION}"
   },
   "settings": {
     "title": "Settings",

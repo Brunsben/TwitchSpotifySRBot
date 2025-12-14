@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from ..constants import APP_VERSION, APP_AUTHOR
+
 logger = logging.getLogger(__name__)
 
 
@@ -61,6 +63,9 @@ class I18n:
             with open(lang_file, "r", encoding="utf-8") as f:
                 self._translations = json.load(f)
             
+            # Replace version placeholders
+            self._replace_version_placeholders(self._translations)
+            
             self._current_language = language
             logger.info(f"Loaded language: {language}")
             return True
@@ -68,6 +73,25 @@ class I18n:
         except Exception as e:
             logger.error(f"Error loading language {language}: {e}")
             return False
+    
+    def _replace_version_placeholders(self, obj: Any) -> None:
+        """Recursively replace {VERSION} and {AUTHOR} placeholders.
+        
+        Args:
+            obj: Dictionary or string to process
+        """
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if isinstance(value, str):
+                    obj[key] = value.replace("{VERSION}", APP_VERSION).replace("{AUTHOR}", APP_AUTHOR)
+                elif isinstance(value, dict):
+                    self._replace_version_placeholders(value)
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                if isinstance(item, str):
+                    obj[i] = item.replace("{VERSION}", APP_VERSION).replace("{AUTHOR}", APP_AUTHOR)
+                elif isinstance(item, (dict, list)):
+                    self._replace_version_placeholders(item)
     
     def get(self, key: str, **kwargs) -> str:
         """Get translated string.
