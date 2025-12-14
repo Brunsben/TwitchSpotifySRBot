@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('locales', 'locales'), ('src', 'src')]
+datas = [('icon.ico', '.'), ('locales', 'locales'), ('src', 'src')]
 binaries = []
 hiddenimports = ['customtkinter', 'spotipy', 'twitchio', 'requests', 'pydantic']
 tmp_ret = collect_all('customtkinter')
@@ -42,5 +42,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='NONE',
+    icon=['icon.ico'],
 )

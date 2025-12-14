@@ -2,9 +2,7 @@
 import asyncio
 import logging
 import random
-import sys
 import webbrowser
-from io import StringIO
 from typing import Optional, List, Dict
 from dataclasses import dataclass
 
@@ -15,19 +13,6 @@ from ..models.song import Song
 from ..models.config import SpotifyConfig
 
 logger = logging.getLogger(__name__)
-
-# Mock sys.stdin/stdout/stderr for PyInstaller .exe builds to prevent "lost sys.*" errors
-if not hasattr(sys.stdin, 'read'):
-    sys.stdin = StringIO()
-    logger.debug("Mocked sys.stdin for PyInstaller build")
-
-if not hasattr(sys.stdout, 'write'):
-    sys.stdout = StringIO()
-    logger.debug("Mocked sys.stdout for PyInstaller build")
-    
-if not hasattr(sys.stderr, 'write'):
-    sys.stderr = StringIO()
-    logger.debug("Mocked sys.stderr for PyInstaller build")
 
 # Patch webbrowser.open to never steal focus
 # This prevents Spotify OAuth from stealing focus during authentication
@@ -78,9 +63,7 @@ class SpotifyService:
                 client_id=self.config.client_id,
                 client_secret=self.config.client_secret,
                 redirect_uri=self.config.redirect_uri,
-                scope=scope,
-                open_browser=False,  # Don't steal focus when opening browser
-                cache_handler=None  # Disable cache to prevent sys.stdin errors in .exe
+                scope=scope
             )
             
             # Run in executor to avoid blocking
@@ -324,13 +307,10 @@ class SpotifyService:
             logger.warning("Spotify client not connected")
             return None
         
-        logger.debug(f"Getting random track from playlist: {self.config.fallback_playlist_id}")
-        
         try:
             loop = asyncio.get_event_loop()
             
             # Get playlist total count
-            logger.debug("Fetching playlist track count...")
             playlist_info = await loop.run_in_executor(
                 None,
                 lambda: self._client.playlist_tracks(
@@ -341,7 +321,6 @@ class SpotifyService:
             )
             
             total = playlist_info.get('total', 0)
-            logger.debug(f"Playlist has {total} tracks")
             
             if total == 0:
                 logger.warning("Fallback playlist is empty")
@@ -349,7 +328,6 @@ class SpotifyService:
             
             # Get random track
             offset = random.randint(0, total - 1)
-            logger.debug(f"Getting track at offset {offset}")
             
             results = await loop.run_in_executor(
                 None,
@@ -377,11 +355,7 @@ class SpotifyService:
             return song
             
         except Exception as e:
-            # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
-            if "lost sys.stdin" not in str(e):
-                logger.error(f"Error getting fallback track: {e}", exc_info=True)
-            else:
-                logger.debug("Suppressed lost sys.stdin error in get_random_fallback_track")
+            logger.error(f"Error getting fallback track: {e}", exc_info=True)
             return None
     
     async def validate_playlist(self, playlist_id: str) -> bool:

@@ -51,6 +51,24 @@ class BotGUI(ctk.CTk):
         self.title(t("gui.title"))
         self.geometry("1200x900")
         self.configure(fg_color=self.COLOR_BG)
+        
+        # Set icon for taskbar and window
+        try:
+            import sys
+            import os
+            if getattr(sys, 'frozen', False):
+                # Running as compiled exe
+                base_path = sys._MEIPASS
+            else:
+                # Running as script
+                base_path = Path(__file__).parent.parent.parent
+            
+            icon_path = Path(base_path) / "icon.ico"
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except Exception as e:
+            logger.warning(f"Could not set icon: {e}")
+        
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         
         # Bot orchestrator
@@ -630,31 +648,45 @@ class BotGUI(ctk.CTk):
         """Handle window close."""
         logger.info("Closing application...")
         
-        # Stop bot if running
-        if self.bot and self.bot.is_running:
-            logger.info("Stopping bot...")
-            if self.loop and self.loop.is_running():
-                future = asyncio.run_coroutine_threadsafe(self.bot.stop(), self.loop)
-                try:
-                    future.result(timeout=10)
-                    logger.info("Bot stopped successfully")
-                except Exception as e:
-                    logger.error(f"Error stopping bot: {e}")
+        # Disable close button to prevent multiple clicks
+        self.protocol("WM_DELETE_WINDOW", lambda: None)
         
-        # Save config
-        self.config_manager.save(self.config)
+        # Immediately hide window for better UX
+        self.withdraw()
         
-        # Stop event loop gracefully
-        if self.loop and self.loop.is_running():
-            logger.info("Stopping event loop...")
-            self.loop.call_soon_threadsafe(self.loop.stop)
+        # Run cleanup in background thread
+        def cleanup():
+            # Stop bot if running
+            if self.bot and self.bot.is_running:
+                logger.info("Stopping bot...")
+                if self.loop and self.loop.is_running():
+                    future = asyncio.run_coroutine_threadsafe(self.bot.stop(), self.loop)
+                    try:
+                        future.result(timeout=3)
+                        logger.info("Bot stopped successfully")
+                    except Exception as e:
+                        logger.error(f"Error stopping bot: {e}")
             
-            # Wait for loop thread to finish
-            if self.loop_thread and self.loop_thread.is_alive():
-                self.loop_thread.join(timeout=2)
+            # Save config
+            try:
+                self.config_manager.save(self.config)
+            except Exception as e:
+                logger.error(f"Error saving config: {e}")
+            
+            # Stop event loop
+            if self.loop and self.loop.is_running():
+                logger.info("Stopping event loop...")
+                self.loop.call_soon_threadsafe(self.loop.stop)
+                
+                # Wait for loop thread
+                if self.loop_thread and self.loop_thread.is_alive():
+                    self.loop_thread.join(timeout=1)
+            
+            logger.info("Application closed")
+            
+            # Force exit (needed because some threads might still be alive)
+            import os
+            os._exit(0)
         
-        # Destroy GUI
-        self.destroy()
-        
-        logger.info("Application closed")
-        sys.exit(0)
+        # Start cleanup in background
+        threading.Thread(target=cleanup, daemon=True).start()

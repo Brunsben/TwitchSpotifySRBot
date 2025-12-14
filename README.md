@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.6-green.svg)
+![Version](https://img.shields.io/badge/version-0.9.7-green.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -183,6 +183,12 @@ Details: [BUILD.md](BUILD.md)
 Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
+
+### v0.9.7 (2025-12-14)
+- ✨ New custom icon with Twitch + Spotify branding (purple & green)
+- 🐛 Fixed autopilot/fallback playlist not starting in .exe builds
+- ⚡ Improved window closing - instant response with background cleanup
+- 🎨 Icon now visible in taskbar and on .exe file
 
 ### v0.9.6 (2025-12-14)
 - 🐛 Fixed 'lost sys.stdin' error in PyInstaller builds
