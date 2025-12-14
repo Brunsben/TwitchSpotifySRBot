@@ -66,8 +66,12 @@ class BotOrchestrator:
             # Connect to Spotify
             await self.spotify.connect()
             
-            # Start OBS overlay server
-            await self.obs_overlay.start()
+            # Start OBS overlay server (non-critical, continue on error)
+            try:
+                await self.obs_overlay.start()
+                logger.info("OBS overlay server started")
+            except Exception as e:
+                logger.warning(f"Failed to start OBS overlay server: {e}")
             
             # Start playback loop
             self._running = True
@@ -213,7 +217,11 @@ class BotOrchestrator:
                 logger.error(f"Error stopping Twitch bot: {e}")
         
         # Stop OBS overlay server
-        await self.obs_overlay.stop()
+        try:
+            await self.obs_overlay.stop()
+            logger.info("OBS overlay server stopped")
+        except Exception as e:
+            logger.warning(f"Error stopping OBS overlay: {e}")
         
         logger.info("Bot orchestrator stopped")
         self._notify_update()

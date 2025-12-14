@@ -60,6 +60,9 @@ class HistoryManager:
         """
         filtered = self._filter_by_days(days)
         
+        # Exclude autopilot songs
+        filtered = [e for e in filtered if e.requester.lower() != "autopilot"]
+        
         # Count by song URI
         song_counts = Counter((entry.song_name, entry.artist, entry.uri) for entry in filtered)
         
@@ -97,6 +100,9 @@ class HistoryManager:
         """
         filtered = self._filter_by_days(days)
         
+        # Exclude autopilot songs
+        filtered = [e for e in filtered if e.requester.lower() != "autopilot"]
+        
         artist_counts = Counter(entry.artist for entry in filtered)
         return artist_counts.most_common(limit)
     
@@ -121,17 +127,20 @@ class HistoryManager:
                 "total_duration_hours": 0.0
             }
         
-        unique_songs = len(set(e.uri for e in filtered))
-        unique_requesters = len(set(e.requester for e in filtered if e.requester.lower() != "autopilot"))
-        skipped = sum(1 for e in filtered if e.was_skipped)
+        # Filter user requests (exclude autopilot) for statistics
+        user_requests = [e for e in filtered if e.requester.lower() != "autopilot"]
+        
+        unique_songs = len(set(e.uri for e in user_requests)) if user_requests else 0
+        unique_requesters = len(set(e.requester for e in user_requests)) if user_requests else 0
+        skipped = sum(1 for e in user_requests if e.was_skipped)
         autopilot = sum(1 for e in filtered if e.requester.lower() == "autopilot")
-        total_duration_ms = sum(e.duration_ms for e in filtered)
+        total_duration_ms = sum(e.duration_ms for e in user_requests)
         
         return {
-            "total_songs": len(filtered),
+            "total_songs": len(user_requests),
             "unique_songs": unique_songs,
             "total_requesters": unique_requesters,
-            "skip_rate": (skipped / len(filtered) * 100) if filtered else 0,
+            "skip_rate": (skipped / len(user_requests) * 100) if user_requests else 0,
             "autopilot_percentage": (autopilot / len(filtered) * 100) if filtered else 0,
             "total_duration_hours": total_duration_ms / (1000 * 60 * 60)
         }
