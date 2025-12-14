@@ -16,10 +16,18 @@ from ..models.config import SpotifyConfig
 
 logger = logging.getLogger(__name__)
 
-# Mock sys.stdin for PyInstaller .exe builds to prevent "lost sys.stdin" errors
+# Mock sys.stdin/stdout/stderr for PyInstaller .exe builds to prevent "lost sys.*" errors
 if not hasattr(sys.stdin, 'read'):
     sys.stdin = StringIO()
     logger.debug("Mocked sys.stdin for PyInstaller build")
+
+if not hasattr(sys.stdout, 'write'):
+    sys.stdout = StringIO()
+    logger.debug("Mocked sys.stdout for PyInstaller build")
+    
+if not hasattr(sys.stderr, 'write'):
+    sys.stderr = StringIO()
+    logger.debug("Mocked sys.stderr for PyInstaller build")
 
 # Patch webbrowser.open to never steal focus
 # This prevents Spotify OAuth from stealing focus during authentication
