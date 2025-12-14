@@ -7,5 +7,14 @@
     "requester": "Autopilot",
     "timestamp": "2025-12-14T23:26:59.535507",
     "was_skipped": false
+  },
+  {
+    "song_name": "Dorflove",
+    "artist": "Kreisligalegende",
+    "uri": "spotify:track:77yRw8X35yyFdpXmziekb7",
+    "duration_ms": 161046,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-14T23:42:53.183866",
+    "was_skipped": false
   }
 ]

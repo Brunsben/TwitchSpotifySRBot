@@ -389,7 +389,7 @@ class BotOrchestrator:
                 
                 # Update OBS overlay
                 await self.obs_overlay.update_song(
-                    title=item.song.name,
+                    name=item.song.name,
                     artist=item.song.artist,
                     requester=requester,
                     cover_url=item.song.cover_url
@@ -434,7 +434,7 @@ class BotOrchestrator:
             
             # Update OBS overlay
             await self.obs_overlay.update_song(
-                title=song.name,
+                name=song.name,
                 artist=song.artist,
                 requester="🤖 Autopilot",
                 cover_url=song.cover_url
