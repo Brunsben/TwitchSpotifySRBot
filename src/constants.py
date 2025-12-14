@@ -2,7 +2,7 @@
 
 # Application metadata
 APP_NAME = "Twitch SR Bot"
-APP_VERSION = "0.9.4"
+APP_VERSION = "0.9.5"
 APP_AUTHOR = "uprisin6"
 
 # Display strings

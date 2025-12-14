@@ -30,7 +30,7 @@ class HelpWindow(ctk.CTkToplevel):
             text=t("help.btn_token"),
             fg_color="#9146FF",
             hover_color="#772ce8",
-            command=lambda: webbrowser.open("https://dev.twitch.tv/console/apps")
+            command=lambda: webbrowser.open("https://dev.twitch.tv/console/apps", new=2, autoraise=False)
         ).pack(side="left", expand=True, padx=5)
         
         ctk.CTkButton(
@@ -38,7 +38,7 @@ class HelpWindow(ctk.CTkToplevel):
             text=t("help.btn_dev"),
             fg_color="#1DB954",
             hover_color="#1aa34a",
-            command=lambda: webbrowser.open("https://developer.spotify.com/dashboard/")
+            command=lambda: webbrowser.open("https://developer.spotify.com/dashboard/", new=2, autoraise=False)
         ).pack(side="left", expand=True, padx=5)
         
         # Help text

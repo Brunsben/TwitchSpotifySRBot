@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import random
+import webbrowser
 from typing import Optional, List, Dict
 from dataclasses import dataclass
 
@@ -12,6 +13,16 @@ from ..models.song import Song
 from ..models.config import SpotifyConfig
 
 logger = logging.getLogger(__name__)
+
+# Patch webbrowser.open to never steal focus
+# This prevents Spotify OAuth from stealing focus during authentication
+_original_open = webbrowser.open
+
+def _patched_open(url, new=0, autoraise=True):
+    """Patched webbrowser.open that never steals focus."""
+    return _original_open(url, new=new, autoraise=False)
+
+webbrowser.open = _patched_open
 
 
 @dataclass

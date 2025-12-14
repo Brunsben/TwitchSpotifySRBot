@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.4-green.svg)
+![Version](https://img.shields.io/badge/version-0.9.5-green.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -183,6 +183,11 @@ Details: [BUILD.md](BUILD.md)
 Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
+
+### v0.9.5 (2025-12-14)
+- 🐛 Fixed browser window stealing focus on bot startup
+- 🔧 Added global webbrowser patch to prevent focus theft
+- 🔗 Fixed Help window links to use autoraise=False
 
 ### v0.9.4 (2025-12-13)
 - 📖 Comprehensive Smart Voting documentation
