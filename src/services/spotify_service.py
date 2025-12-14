@@ -300,13 +300,21 @@ class SpotifyService:
         Returns:
             Random Song from playlist, or None
         """
-        if not self.config.fallback_playlist_id or not self._client:
+        if not self.config.fallback_playlist_id:
+            logger.warning("No fallback playlist ID configured")
             return None
+            
+        if not self._client:
+            logger.warning("Spotify client not connected")
+            return None
+        
+        logger.debug(f"Getting random track from playlist: {self.config.fallback_playlist_id}")
         
         try:
             loop = asyncio.get_event_loop()
             
             # Get playlist total count
+            logger.debug("Fetching playlist track count...")
             playlist_info = await loop.run_in_executor(
                 None,
                 lambda: self._client.playlist_tracks(
@@ -317,12 +325,16 @@ class SpotifyService:
             )
             
             total = playlist_info.get('total', 0)
+            logger.debug(f"Playlist has {total} tracks")
+            
             if total == 0:
                 logger.warning("Fallback playlist is empty")
                 return None
             
             # Get random track
             offset = random.randint(0, total - 1)
+            logger.debug(f"Getting track at offset {offset}")
+            
             results = await loop.run_in_executor(
                 None,
                 lambda: self._client.playlist_items(
@@ -333,21 +345,27 @@ class SpotifyService:
             )
             
             if not results['items']:
+                logger.warning("No tracks found in playlist results")
                 return None
             
             track = results['items'][0]['track']
             
-            return Song(
+            song = Song(
                 name=track['name'],
                 uri=track['uri'],
                 duration_ms=track['duration_ms'],
                 artist=track['artists'][0]['name']
             )
             
+            logger.info(f"Selected fallback track: {song.full_name}")
+            return song
+            
         except Exception as e:
             # Ignore "lost sys.stdin" errors from PyInstaller .exe builds
             if "lost sys.stdin" not in str(e):
-                logger.error(f"Error getting fallback track: {e}")
+                logger.error(f"Error getting fallback track: {e}", exc_info=True)
+            else:
+                logger.debug("Suppressed lost sys.stdin error in get_random_fallback_track")
             return None
     
     async def validate_playlist(self, playlist_id: str) -> bool:
