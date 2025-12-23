@@ -7,7 +7,7 @@ from threading import Thread
 import customtkinter as ctk
 from tkinter import messagebox
 
-from ..models.config import BotConfig, TwitchConfig, SpotifyConfig, RulesConfig
+from ..models.config import BotConfig, TwitchConfig, SpotifyConfig, RulesConfig, BlacklistConfig
 from ..utils.i18n import t
 from ..utils.twitch_oauth import TwitchOAuth
 
@@ -44,11 +44,15 @@ class SettingsWindow(ctk.CTkToplevel):
         
         # Create tabs
         tab_rules = self.tabview.add("⚙️ Regeln & Limits")
-        tab_twitch = self.tabview.add("🔐 Twitch Login")
+        tab_blacklist = self.tabview.add("🚫 Blacklist")
+        tab_permissions = self.tabview.add("🔐 Command Rechte")
+        tab_twitch = self.tabview.add("💬 Twitch Login")
         tab_spotify = self.tabview.add("🎵 Spotify API")
         
         # Configure each tab
         self._setup_rules_tab(tab_rules, config)
+        self._setup_blacklist_tab(tab_blacklist, config)
+        self._setup_permissions_tab(tab_permissions, config)
         self._setup_twitch_tab(tab_twitch, config)
         self._setup_spotify_tab(tab_spotify, config)
         
@@ -247,50 +251,6 @@ class SettingsWindow(ctk.CTkToplevel):
         
         self._create_divider(scroll)
         
-        # Permission section
-        ctk.CTkLabel(
-            scroll,
-            text="Berechtigungen",
-            font=("Roboto", 16, "bold")
-        ).pack(pady=(10, 5))
-        
-        ctk.CTkLabel(
-            scroll,
-            text=t("settings.lbl_permission"),
-            font=("Arial", 11, "bold"),
-            anchor="w"
-        ).pack(fill="x", pady=(5, 5), padx=10)
-        
-        # Map for permission values to display labels
-        self.perm_label_map = {
-            "all": t("settings.perm_all"),
-            "followers": t("settings.perm_followers"),
-            "subscribers": t("settings.perm_subscribers")
-        }
-        
-        # Reverse map for saving
-        self.perm_value_map = {v: k for k, v in self.perm_label_map.items()}
-        
-        self.permission_var = ctk.StringVar(
-            value=self.perm_label_map.get(config.twitch.request_permission, self.perm_label_map["all"])
-        )
-        
-        permission_menu = ctk.CTkOptionMenu(
-            scroll,
-            variable=self.permission_var,
-            values=list(self.perm_label_map.values()),
-            width=300,
-            height=35,
-            fg_color="#2b2b2b",
-            button_color="#1f538d",
-            button_hover_color="#14375e",
-            dropdown_fg_color="#2b2b2b",
-            dropdown_hover_color="#363636"
-        )
-        permission_menu.pack(pady=(0, 10), padx=10)
-        
-        self._create_divider(scroll)
-        
         # Queue limits section
         ctk.CTkLabel(
             scroll,
@@ -321,6 +281,152 @@ class SettingsWindow(ctk.CTkToplevel):
             t("settings.lbl_cooldown"),
             str(config.rules.song_cooldown_minutes)
         )
+        
+        self.entry_user_cooldown = self._create_input(
+            scroll,
+            t("settings.lbl_user_cooldown") + " - " + t("settings.desc_user_cooldown"),
+            str(config.rules.user_request_cooldown_minutes)
+        )
+    
+    def _setup_blacklist_tab(self, parent, config: BotConfig):
+        """Setup blacklist tab."""
+        scroll = ctk.CTkScrollableFrame(parent, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Description
+        ctk.CTkLabel(
+            scroll,
+            text=t("settings.desc_blacklist"),
+            font=("Arial", 11),
+            text_color="#999",
+            anchor="w",
+            justify="left"
+        ).pack(fill="x", padx=10, pady=(10, 20))
+        
+        # Blocked Songs Section
+        self._create_section_header(scroll, t("settings.lbl_blacklist_songs"))
+        
+        self.text_blacklist_songs = ctk.CTkTextbox(
+            scroll,
+            height=150,
+            fg_color="#333",
+            border_color="#555",
+            border_width=1
+        )
+        self.text_blacklist_songs.pack(fill="x", padx=10, pady=(0, 20))
+        
+        # Populate with current blacklist songs (one per line)
+        if config.blacklist.songs:
+            self.text_blacklist_songs.insert("1.0", "\\n".join(config.blacklist.songs))
+        
+        # Blocked Artists Section
+        self._create_section_header(scroll, t("settings.lbl_blacklist_artists"))
+        
+        self.text_blacklist_artists = ctk.CTkTextbox(
+            scroll,
+            height=150,
+            fg_color="#333",
+            border_color="#555",
+            border_width=1
+        )
+        self.text_blacklist_artists.pack(fill="x", padx=10, pady=(0, 20))
+        
+        # Populate with current blacklist artists (one per line)
+        if config.blacklist.artists:
+            self.text_blacklist_artists.insert("1.0", "\n".join(config.blacklist.artists))
+    
+    def _setup_permissions_tab(self, parent, config: BotConfig):
+        """Setup Command Permissions tab."""
+        from ..models.config import CommandPermission
+        
+        scroll = ctk.CTkScrollableFrame(parent, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Header
+        ctk.CTkLabel(
+            scroll,
+            text="Command Berechtigungen",
+            font=("Roboto", 18, "bold")
+        ).pack(pady=(10, 5))
+        
+        ctk.CTkLabel(
+            scroll,
+            text="Lege fest, wer welche Chat-Commands nutzen darf.",
+            font=("Roboto", 12),
+            text_color="#888"
+        ).pack(pady=(0, 20))
+        
+        # Permission options mapping
+        perm_options = {
+            "Jeder": CommandPermission.EVERYONE,
+            "Follower": CommandPermission.FOLLOWERS,
+            "Subscriber": CommandPermission.SUBSCRIBERS,
+            "Moderatoren": CommandPermission.MODERATORS,
+            "Broadcaster": CommandPermission.BROADCASTER
+        }
+        perm_reverse = {v: k for k, v in perm_options.items()}
+        
+        # Store dropdowns for save
+        self.cmd_permission_dropdowns = {}
+        
+        # Commands to configure
+        commands = [
+            ("!sr", "sr", "Song Request Command"),
+            ("!skip", "skip", "Song überspringen"),
+            ("!currentsong", "currentsong", "Aktuellen Song anzeigen"),
+            ("!queue", "queue", "Warteschlange anzeigen"),
+            ("!wrongsong", "wrongsong", "Eigenen letzten Song entfernen"),
+            ("!songinfo", "songinfo", "Details zum aktuellen Song"),
+            ("!blacklist", "blacklist", "Blacklist anzeigen"),
+            ("!addblacklist", "addblacklist", "Zur Blacklist hinzufügen"),
+            ("!removeblacklist", "removeblacklist", "Von Blacklist entfernen"),
+            ("!clearqueue", "clearqueue", "Warteschlange leeren"),
+            ("!pauserequests", "pauserequests", "Song Requests pausieren"),
+            ("!resumerequests", "resumerequests", "Song Requests fortsetzen"),
+            ("!pausesr", "pausesr", "Wiedergabe pausieren"),
+            ("!resumesr", "resumesr", "Wiedergabe fortsetzen"),
+            ("!srhelp", "srhelp", "Verfügbare Commands anzeigen")
+        ]
+        
+        # Create table-like layout
+        for cmd_display, cmd_key, cmd_desc in commands:
+            frame = ctk.CTkFrame(scroll, fg_color="#333", corner_radius=8)
+            frame.pack(fill="x", padx=10, pady=5)
+            
+            # Left side: Command name and description
+            left_frame = ctk.CTkFrame(frame, fg_color="transparent")
+            left_frame.pack(side="left", fill="both", expand=True, padx=15, pady=10)
+            
+            ctk.CTkLabel(
+                left_frame,
+                text=cmd_display,
+                font=("Roboto Mono", 14, "bold"),
+                text_color="#1DB954"
+            ).pack(anchor="w")
+            
+            ctk.CTkLabel(
+                left_frame,
+                text=cmd_desc,
+                font=("Roboto", 11),
+                text_color="#888"
+            ).pack(anchor="w")
+            
+            # Right side: Permission dropdown
+            current_perm = getattr(config.command_permissions, cmd_key)
+            current_value = perm_reverse.get(current_perm, "Jeder")
+            
+            dropdown = ctk.CTkOptionMenu(
+                frame,
+                values=list(perm_options.keys()),
+                fg_color="#1DB954",
+                button_color="#1DB954",
+                button_hover_color="#1ed760",
+                width=150
+            )
+            dropdown.set(current_value)
+            dropdown.pack(side="right", padx=15, pady=10)
+            
+            self.cmd_permission_dropdowns[cmd_key] = (dropdown, perm_options)
     
     def _create_section_header(self, parent, text: str):
         """Create section header.
@@ -381,15 +487,19 @@ class SettingsWindow(ctk.CTkToplevel):
     
     def _save_settings(self):
         """Save settings and close window."""
+        from ..models.config import CommandPermissions
+        
         try:
             # Create new config
             token = self.entry_token.get().strip()
             if token and not token.startswith("oauth:"):
                 token = f"oauth:{token}"
             
-            # Convert displayed label back to permission value
-            selected_label = self.permission_var.get()
-            perm_value = self.perm_value_map.get(selected_label, "all")
+            # Build command permissions from dropdowns
+            cmd_perms = {}
+            for cmd_key, (dropdown, perm_options) in self.cmd_permission_dropdowns.items():
+                selected_label = dropdown.get()
+                cmd_perms[cmd_key] = perm_options[selected_label]
             
             new_config = BotConfig(
                 language=self.combo_lang.get(),
@@ -397,8 +507,7 @@ class SettingsWindow(ctk.CTkToplevel):
                     channel=self.entry_channel.get().strip(),
                     token=token,
                     client_id=self.entry_twitch_client_id.get().strip(),
-                    client_secret=self.entry_twitch_client_secret.get().strip(),
-                    request_permission=perm_value
+                    client_secret=self.entry_twitch_client_secret.get().strip()
                 ),
                 spotify=SpotifyConfig(
                     client_id=self.entry_sp_id.get().strip(),
@@ -409,8 +518,14 @@ class SettingsWindow(ctk.CTkToplevel):
                     max_queue_size=int(self.entry_max_queue.get()),
                     max_user_requests=int(self.entry_max_user.get()),
                     max_song_length_minutes=int(self.entry_max_len.get()),
-                    song_cooldown_minutes=int(self.entry_cooldown.get())
+                    song_cooldown_minutes=int(self.entry_cooldown.get()),
+                    user_request_cooldown_minutes=int(self.entry_user_cooldown.get())
                 ),
+                blacklist=BlacklistConfig(
+                    songs=[s.strip() for s in self.text_blacklist_songs.get("1.0", "end").strip().split("\n") if s.strip()],
+                    artists=[a.strip() for a in self.text_blacklist_artists.get("1.0", "end").strip().split("\n") if a.strip()]
+                ),
+                command_permissions=CommandPermissions(**cmd_perms),
                 smart_voting_enabled=self.config.smart_voting_enabled
             )
             

@@ -294,6 +294,54 @@ class SpotifyService:
             if "lost sys.stdin" not in str(e):
                 logger.error(f"Error skipping track: {e}")
     
+    async def pause_playback(self) -> None:
+        """Pause current playback."""
+        if not self._client:
+            return
+        
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: self._client.pause_playback(device_id=self._device_id)
+            )
+            logger.info("Paused playback")
+            
+        except Exception as e:
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error pausing playback: {e}")
+                raise  # Re-raise exception so bot_orchestrator can handle it
+    
+    async def resume_playback(self) -> None:
+        """Resume current playback."""
+        if not self._client:
+            return
+        
+        try:
+            # Get current playback state to check if something is paused
+            state = await self.get_playback_state()
+            
+            if not state:
+                logger.warning("No playback state available to resume")
+                return
+            
+            # Only resume if playback is currently paused
+            if not state.is_playing:
+                loop = asyncio.get_event_loop()
+                # Resume playback without changing the track
+                await loop.run_in_executor(
+                    None,
+                    lambda: self._client.start_playback(device_id=self._device_id)
+                )
+                logger.info("Resumed playback")
+            else:
+                logger.info("Playback is already playing")
+            
+        except Exception as e:
+            if "lost sys.stdin" not in str(e):
+                logger.error(f"Error resuming playback: {e}")
+                raise  # Re-raise exception so bot_orchestrator can handle it
+    
     async def get_random_fallback_track(self) -> Optional[Song]:
         """Get a random track from the fallback playlist.
         

@@ -32,7 +32,7 @@ class BotOrchestrator:
         
         # Services
         self.spotify = SpotifyService(config.spotify)
-        self.queue_manager = QueueManager(config.rules, config.smart_voting_enabled)
+        self.queue_manager = QueueManager(config.rules, config.blacklist, config.smart_voting_enabled, config.requests_paused)
         self.history_manager = history_manager if history_manager else HistoryManager()
         self.obs_overlay = OBSOverlayServer(port=8080)
         self.twitch_bot: Optional[TwitchBotService] = None
@@ -93,10 +93,22 @@ class BotOrchestrator:
         """Start Twitch bot in separate thread."""
         def run_bot():
             self.twitch_bot = TwitchBotService(
-                self.config.twitch,
+                self.config,
                 self._handle_song_request_sync,
-                self._handle_skip_sync,
-                self._handle_current_song_sync
+                on_skip=self._handle_skip_sync,
+                on_current_song=self._handle_current_song_sync,
+                on_blacklist=self._handle_blacklist_sync,
+                on_add_blacklist=self._handle_add_blacklist_sync,
+                on_remove_blacklist=self._handle_remove_blacklist_sync,
+                on_queue=self._handle_queue_sync,
+                on_clear_queue=self._handle_clear_queue_sync,
+                on_wrong_song=self._handle_wrong_song_sync,
+                on_song_info=self._handle_song_info_sync,
+                on_srhelp=self._handle_srhelp_sync,
+                on_pause_requests=self._handle_pause_requests_sync,
+                on_resume_requests=self._handle_resume_requests_sync,
+                on_pause_playback=self._handle_pause_playback_sync,
+                on_resume_playback=self._handle_resume_playback_sync
             )
             
             # Create new event loop for this thread
@@ -191,6 +203,314 @@ class BotOrchestrator:
             requesters += f" (+{len(track.requesters) - 3} weitere)"
         
         return f"@{username} 🎵 Aktuell: {track.song.full_name} | Requested by: {requesters}"
+    
+    def _handle_blacklist_sync(self, username: str) -> str:
+        """Synchronous wrapper for blacklist command.
+        
+        Args:
+            username: User who executed the command
+        
+        Returns:
+            Response message for chat
+        """
+        blacklist = self.config.blacklist
+        
+        if not blacklist.songs and not blacklist.artists:
+            return t("chat.cmd_blacklist_empty", user=username)
+        
+        songs_str = ", ".join(blacklist.songs) if blacklist.songs else "keine"
+        artists_str = ", ".join(blacklist.artists) if blacklist.artists else "keine"
+        
+        return t("chat.cmd_blacklist", user=username, songs=songs_str, artists=artists_str)
+    
+    def _handle_add_blacklist_sync(self, username: str, entry: str) -> str:
+        """Add entry to blacklist.
+        
+        Args:
+            username: User who executed the command
+            entry: Song or artist to add
+            
+        Returns:
+            Response message for chat
+        """
+        from ..utils.config_manager import save_config
+        
+        # Determine if it's a song or artist (simple heuristic: if contains "-" it's likely a song)
+        if " - " in entry:
+            if entry not in self.config.blacklist.songs:
+                self.config.blacklist.songs.append(entry)
+                save_config(self.config)
+                self.queue_manager.update_blacklist(self.config.blacklist)
+                return f"@{username} Song '{entry}' zur Blacklist hinzugefügt."
+            else:
+                return f"@{username} Song '{entry}' ist bereits auf der Blacklist."
+        else:
+            if entry not in self.config.blacklist.artists:
+                self.config.blacklist.artists.append(entry)
+                save_config(self.config)
+                self.queue_manager.update_blacklist(self.config.blacklist)
+                return f"@{username} Artist '{entry}' zur Blacklist hinzugefügt."
+            else:
+                return f"@{username} Artist '{entry}' ist bereits auf der Blacklist."
+    
+    def _handle_remove_blacklist_sync(self, username: str, entry: str) -> str:
+        """Remove entry from blacklist.
+        
+        Args:
+            username: User who executed the command
+            entry: Song or artist to remove
+            
+        Returns:
+            Response message for chat
+        """
+        from ..utils.config_manager import save_config
+        
+        removed = False
+        
+        # Try to remove from songs
+        if entry in self.config.blacklist.songs:
+            self.config.blacklist.songs.remove(entry)
+            removed = True
+            type_str = "Song"
+        
+        # Try to remove from artists
+        if entry in self.config.blacklist.artists:
+            self.config.blacklist.artists.remove(entry)
+            removed = True
+            type_str = "Artist"
+        
+        if removed:
+            save_config(self.config)
+            self.queue_manager.update_blacklist(self.config.blacklist)
+            return f"@{username} {type_str} '{entry}' von der Blacklist entfernt."
+        else:
+            return f"@{username} '{entry}' wurde nicht auf der Blacklist gefunden."
+    
+    def _handle_queue_sync(self, username: str) -> str:
+        """Show current queue.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        queue = self.queue_manager.get_queue()
+        
+        if not queue:
+            return f"@{username} Die Warteschlange ist leer."
+        
+        # Show first 5 songs
+        queue_str = " | ".join([f"{i+1}. {track.song.name}" for i, track in enumerate(queue[:5])])
+        
+        if len(queue) > 5:
+            queue_str += f" (+{len(queue)-5} weitere)"
+        
+        return f"@{username} Queue ({len(queue)}): {queue_str}"
+    
+    def _handle_clear_queue_sync(self, username: str) -> str:
+        """Clear the queue.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        count = len(self.queue_manager.get_queue())
+        self.queue_manager.clear_queue()
+        return f"@{username} Warteschlange geleert ({count} Songs entfernt)."
+    
+    def _handle_wrong_song_sync(self, username: str) -> str:
+        """Remove user's last request from queue.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        queue = self.queue_manager.get_queue()
+        
+        # Find last song from this user
+        for i in range(len(queue) - 1, -1, -1):
+            track = queue[i]
+            if username.lower() in [r.lower() for r in track.requesters]:
+                song_name = track.song.name
+                self.queue_manager.remove_track_at_index(i)
+                return f"@{username} '{song_name}' wurde entfernt."
+        
+        return f"@{username} Du hast keine Songs in der Queue."
+    
+    def _handle_song_info_sync(self, username: str) -> str:
+        """Show detailed info about current song.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        if not self._current_track:
+            return f"@{username} Aktuell spielt kein Song."
+        
+        song = self._current_track.song
+        
+        # Get additional info from Spotify
+        try:
+            track_info = self.spotify._client.track(song.uri)
+            
+            # Extract detailed info
+            album = track_info['album']['name']
+            release_date = track_info['album']['release_date']
+            year = release_date.split('-')[0] if release_date else 'Unbekannt'
+            popularity = track_info['popularity']  # 0-100
+            duration_ms = track_info['duration_ms']
+            duration_min = duration_ms // 60000
+            duration_sec = (duration_ms % 60000) // 1000
+            
+            # Build response
+            info_parts = [
+                f"🎵 {song.full_name}",
+                f"📀 Album: {album}",
+                f"📅 Jahr: {year}",
+                f"⏱️ Länge: {duration_min}:{duration_sec:02d}",
+                f"📊 Popularity: {popularity}/100"
+            ]
+            
+            # Add requester if available
+            if self._current_track.requesters:
+                requesters = ", ".join(self._current_track.requesters[:2])
+                if len(self._current_track.requesters) > 2:
+                    requesters += f" (+{len(self._current_track.requesters) - 2})"
+                info_parts.append(f"👤 Request: {requesters}")
+            
+            return f"@{username} {' | '.join(info_parts)}"
+            
+        except Exception as e:
+            logger.error(f"Error fetching song info: {e}")
+            # Fallback to basic info
+            return f"@{username} 🎵 {song.full_name} | Keine Details verfügbar."
+    
+    def _handle_srhelp_sync(self, username: str) -> str:
+        """Show available commands.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        perms = self.config.command_permissions
+        
+        # Build command list based on permissions
+        cmds = []
+        cmds.append("!sr <song>")
+        cmds.append("!currentsong")
+        cmds.append("!queue")
+        cmds.append("!wrongsong")
+        cmds.append("!blacklist")
+        
+        # Add mod commands hint
+        return f"@{username} Commands: {', '.join(cmds)} | Mehr Infos: github.com/Brunsben/TwitchSpotifySRBot"
+    
+    def _handle_pause_requests_sync(self, username: str) -> str:
+        """Pause song requests.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        self.queue_manager.set_requests_paused(True)
+        # Also update config so it persists
+        self.config.requests_paused = True
+        save_config(self.config)
+        return t("chat.cmd_requests_paused", user=username)
+    
+    def _handle_resume_requests_sync(self, username: str) -> str:
+        """Resume song requests.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        self.queue_manager.set_requests_paused(False)
+        # Also update config so it persists
+        self.config.requests_paused = False
+        save_config(self.config)
+        return t("chat.cmd_requests_resumed", user=username)
+    
+    def _handle_pause_playback_sync(self, username: str) -> str:
+        """Pause Spotify playback.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        try:
+            # Check if Spotify is playing
+            future_check = asyncio.run_coroutine_threadsafe(
+                self.spotify.get_playback_state(),
+                self._main_loop
+            )
+            state = future_check.result(timeout=5)
+            
+            if not state:
+                return t("chat.err_no_playback", user=username)
+            
+            if not state.is_playing:
+                return t("chat.err_already_paused", user=username)
+            
+            # Run async method in event loop
+            future = asyncio.run_coroutine_threadsafe(
+                self.spotify.pause_playback(),
+                self._main_loop
+            )
+            future.result(timeout=5)
+            return t("chat.cmd_playback_paused", user=username)
+        except Exception as e:
+            logger.error(f"Error in pause playback: {e}")
+            return t("chat.err_no_playback", user=username)
+    
+    def _handle_resume_playback_sync(self, username: str) -> str:
+        """Resume Spotify playback.
+        
+        Args:
+            username: User who executed the command
+            
+        Returns:
+            Response message for chat
+        """
+        try:
+            # Check if Spotify has any playback state
+            future_check = asyncio.run_coroutine_threadsafe(
+                self.spotify.get_playback_state(),
+                self._main_loop
+            )
+            state = future_check.result(timeout=5)
+            
+            if not state:
+                return t("chat.err_no_playback", user=username)
+            
+            if state.is_playing:
+                return t("chat.err_already_playing", user=username)
+            
+            # Run async method in event loop
+            future = asyncio.run_coroutine_threadsafe(
+                self.spotify.resume_playback(),
+                self._main_loop
+            )
+            future.result(timeout=5)
+            return t("chat.cmd_playback_resumed", user=username)
+        except Exception as e:
+            logger.error(f"Error in resume playback: {e}")
+            return t("chat.err_no_playback", user=username)
     
     async def stop(self) -> None:
         """Stop the bot."""
@@ -309,6 +629,18 @@ class BotOrchestrator:
         
         elif result == RequestResult.ON_COOLDOWN:
             return t("chat.err_cooldown", user=username)
+        
+        elif result == RequestResult.USER_COOLDOWN:
+            remaining_seconds = self.queue_manager.get_user_cooldown_remaining(username)
+            remaining_minutes = max(1, int(remaining_seconds / 60))
+            return t("chat.err_user_cooldown", user=username, minutes=remaining_minutes)
+        
+        elif result == RequestResult.BLACKLISTED:
+            reason = getattr(song, '_blacklist_reason', 'Blacklist')
+            return t("chat.err_blacklisted", user=username, song=song.name, reason=reason)
+        
+        elif result == RequestResult.REQUESTS_PAUSED:
+            return t("chat.err_requests_paused", user=username)
         
         else:
             return t("chat.err_not_found", user=username)

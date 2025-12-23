@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.8-green.svg)
+![Version](https://img.shields.io/badge/version-0.9.9-green.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -66,17 +66,39 @@ python app.py
 
 ### Chat Commands
 
+#### 👥 Für alle User (EVERYONE)
 ```
 !sr <Songname>          - Sucht und fügt Song hinzu
 !sr <Spotify-Link>      - Fügt Song direkt hinzu
-!currentsong            - Zeigt aktuellen Song
-!skip                   - Überspringt Song (nur Broadcaster/Mods)
+!currentsong / !song    - Zeigt aktuellen Song
+!songinfo               - Detaillierte Spotify-Metadaten (Album, Release, Dauer, Popularität)
+!queue                  - Zeigt erste 5 Songs in der Queue
+!blacklist              - Zeigt blockierte Songs/Artists
+!wrongsong / !oops      - Entfernt eigenen letzten Request
+!srhelp / !commands     - Zeigt alle verfügbaren Commands
 ```
+
+#### 🔨 Für Moderatoren (MODERATORS)
+```
+!skip                   - Überspringt aktuellen Song
+!clearqueue             - Löscht komplette Queue
+!pauserequests          - Pausiert Song Requests
+!resumerequests         - Aktiviert Song Requests wieder
+!pausesr                - Pausiert Spotify-Wiedergabe
+!resumesr               - Setzt Spotify-Wiedergabe fort
+!addblacklist <name>    - Fügt Song/Artist zur Blacklist hinzu
+!removeblacklist <name> - Entfernt Song/Artist von Blacklist
+```
+
+**Hinweis**: Alle Permissions können individuell konfiguriert werden!
 
 **Beispiele:**
 ```
 !sr Never Gonna Give You Up
 !sr https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT
+!songinfo
+!addblacklist Nickelback
+!pauserequests
 ```
 
 ### GUI Bedienung
@@ -117,6 +139,24 @@ TwitchSpotifySRBot/
 
 ## 🔧 Einstellungen
 
+### Command Permissions (NEU in v0.9.9)
+- **5-Tier System**: EVERYONE, FOLLOWERS, SUBSCRIBERS, MODERATORS, BROADCASTER
+- **15 Commands**: Jeder Command individuell konfigurierbar
+- **GUI-Verwaltung**: Settings-Tab → "Commands" mit Dropdown-Menüs
+- **Flexible Kontrolle**: Bestimme genau, wer welche Commands nutzen darf
+
+### Anti-Spam & Cooldowns (NEU in v0.9.9)
+- **User-Cooldown**: Wartezeit zwischen Requests pro User (Standard: 3 Min., 0 = aus)
+- **Song-Cooldown**: Wartezeit bis Song erneut gewünscht werden kann (Standard: 15 Min., 0 = aus)
+- **Bypass**: Moderatoren und Broadcaster ignorieren Cooldowns
+
+### Blacklist (NEU in v0.9.9)
+- **Songs blockieren**: Verhindere bestimmte Tracks
+- **Artists blockieren**: Sperre komplette Künstler
+- **Partial Matching**: Automatische Namens-Erkennung
+- **Live-Updates**: Änderungen sofort aktiv
+- **Verwaltung**: Via GUI oder Chat-Commands
+
 ### Berechtigungen
 - **Alle**: Jeder kann Songs wünschen
 - **Nur Follower**: Twitch API prüft Follower-Status (5 Min. Cache)
@@ -126,7 +166,7 @@ TwitchSpotifySRBot/
 - **Max. Queue**: Warteschlangengröße (z.B. 10)
 - **Max. pro User**: Songs gleichzeitig pro User (z.B. 2)
 - **Max. Länge**: Song-Dauer in Minuten (z.B. 8)
-- **Cooldown**: Minuten bis Song erneut gewünscht werden kann (z.B. 30)
+- **Duplicate Detection**: Verhindert doppelte Songs (wenn Smart Voting aus)
 
 ### Autopilot
 - **Zweck**: Spielt Musik wenn Queue leer
@@ -172,6 +212,17 @@ Details: [BUILD.md](BUILD.md)
 - ✅ Erstelle neuen Token mit korrekten Scopes
 - ✅ TwitchIO 3.x benötigt EventSub-Authentifizierung
 
+### Spotify nicht verbunden
+- ✅ **GUI Statusanzeige beachten**: "⚠️ Spotify: Bitte starten!" bedeutet Spotify läuft nicht
+- ✅ Spotify muss auf einem Gerät aktiv sein (PC, Handy, Browser)
+- ✅ **Premium Account erforderlich** für Playback-Steuerung
+- ✅ Prüfe Spotify API Credentials in Settings
+
+### Commands funktionieren nicht
+- ✅ **Permissions prüfen**: Settings → Commands Tab
+- ✅ Jeder Command hat eigene Permission-Level
+- ✅ Standard: Moderator-Commands nur für Mods, User-Commands für alle
+
 ### Follower-Check funktioniert nicht
 - ✅ Twitch App benötigt zusätzliche Permissions
 - ✅ Cache wird alle 5 Minuten aktualisiert
@@ -185,6 +236,26 @@ Details: [BUILD.md](BUILD.md)
 Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 📝 Changelog
+
+### v0.9.9 (2025-12-23)
+- 🎉 **MAJOR**: Flexible Command Permission System
+  - 5-Tier Levels: EVERYONE → FOLLOWERS → SUBSCRIBERS → MODERATORS → BROADCASTER
+  - Per-Command Configuration: 15 commands individually configurable
+  - Full GUI Integration: New "Commands" tab in settings
+- 🎮 **12 NEW COMMANDS** (3 → 15 total):
+  - Queue Control: `!queue`, `!clearqueue`, `!pauserequests`, `!resumerequests`
+  - Blacklist: `!blacklist`, `!addblacklist`, `!removeblacklist`
+  - Playback: `!pausesr`, `!resumesr`
+  - Info: `!songinfo`, `!srhelp`/`!commands`
+  - User: `!wrongsong`/`!oops`
+- 🚫 **Blacklist System**: Block songs or entire artists with live updates
+- ⏱️ **Anti-Spam System**: User-Cooldown (3 min) + Song-Cooldown (15 min)
+- 🔍 **Duplicate Detection**: Prevents duplicate songs in queue (Smart Voting dependent)
+- 📊 **Spotify Status Display**: Real-time connection monitoring in GUI
+  - ✅ Connected (green) / ⚠️ Please start Spotify (orange) / ❌ Not connected (red)
+- 📚 **OBS Setup Documentation**: 340 lines comprehensive API guide (OBS_SETUP.md)
+- 🐛 **5 Critical Bug Fixes**: Twitch connection, config structure, Spotify client, playback resume, error handling
+- 🌍 **i18n Complete**: Full German/English translations for all features
 
 ### v0.9.8 (2025-12-15)
 - 📊 **NEW**: Song History & Statistics tracking system

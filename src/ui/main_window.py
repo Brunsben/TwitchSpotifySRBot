@@ -155,6 +155,24 @@ class BotGUI(ctk.CTk):
         )
         self.switch_smart.pack(pady=20, padx=40, anchor="w")
         
+        # Requests status label
+        self.requests_status_lbl = ctk.CTkLabel(
+            self.frame_side,
+            text="✅ Requests Aktiv" if not self.config.requests_paused else "⏸️ Requests Pausiert",
+            font=("Roboto", 12, "bold"),
+            text_color="#4CAF50" if not self.config.requests_paused else "#FF9800"
+        )
+        self.requests_status_lbl.pack(pady=(0, 10), padx=40, anchor="w")
+        
+        # Spotify status label
+        self.spotify_status_lbl = ctk.CTkLabel(
+            self.frame_side,
+            text="🔄 Spotify: Prüfe...",
+            font=("Roboto", 12, "bold"),
+            text_color="#FFB300"
+        )
+        self.spotify_status_lbl.pack(pady=(0, 20), padx=40, anchor="w")
+        
         # Settings button
         ctk.CTkButton(
             self.frame_side,
@@ -439,10 +457,57 @@ class BotGUI(ctk.CTk):
         """Update UI with current bot state."""
         self.after(0, self._update_ui_safe)
     
+    def _update_spotify_status(self):
+        """Update Spotify connection status indicator."""
+        if not self.bot or not self.bot.spotify:
+            self.spotify_status_lbl.configure(
+                text="❌ Spotify: Nicht verbunden",
+                text_color="#F44336"
+            )
+            return
+        
+        # Check if we have an active device
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                self.bot.spotify.get_playback_state(),
+                self.bot._main_loop
+            )
+            state = future.result(timeout=3)
+            
+            if state:
+                self.spotify_status_lbl.configure(
+                    text="✅ Spotify: Verbunden",
+                    text_color="#4CAF50"
+                )
+            else:
+                self.spotify_status_lbl.configure(
+                    text="⚠️ Spotify: Bitte starten!",
+                    text_color="#FF9800"
+                )
+        except Exception:
+            # Spotify not responding or not running
+            self.spotify_status_lbl.configure(
+                text="⚠️ Spotify: Bitte starten!",
+                text_color="#FF9800"
+            )
+    
     def _update_ui_safe(self):
         """Update UI (thread-safe)."""
         if not self.bot:
             return
+        
+        # Update requests status indicator
+        requests_paused = self.config.requests_paused
+        self.requests_status_lbl.configure(
+            text="✅ Requests Aktiv" if not requests_paused else "⏸️ Requests Pausiert",
+            text_color="#4CAF50" if not requests_paused else "#FF9800"
+        )
+        
+        # Update Spotify status indicator
+        self._update_spotify_status()
+        
+        # Update Spotify status indicator
+        self._update_spotify_status()
         
         # Update now playing
         current = self.bot.current_track
@@ -622,6 +687,13 @@ class BotGUI(ctk.CTk):
         old_lang = self.config.language
         self.config = new_config
         self.config_manager.save(new_config)
+        
+        # Update bot config if running
+        if self.bot:
+            self.bot.config = new_config
+            # Update queue manager blacklist
+            self.bot.queue_manager.update_blacklist(new_config.blacklist)
+            logger.info("Bot configuration updated with new settings")
         
         if new_config.language != old_lang:
             messagebox.showinfo("Language Changed", t("gui.restart_msg"))

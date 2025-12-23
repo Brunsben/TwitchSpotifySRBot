@@ -6,7 +6,7 @@ from typing import List, Optional, Dict
 from enum import Enum
 
 from ..models.song import Song, QueueItem
-from ..models.config import RulesConfig
+from ..models.config import RulesConfig, BlacklistConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,25 +19,41 @@ class RequestResult(Enum):
     USER_LIMIT = "user_limit"
     TOO_LONG = "too_long"
     ON_COOLDOWN = "on_cooldown"
+    USER_COOLDOWN = "user_cooldown"
+    BLACKLISTED = "blacklisted"
     NOT_FOUND = "not_found"
     VOTED = "voted"
+    DUPLICATE = "duplicate"
+    REQUESTS_PAUSED = "requests_paused"
 
 
 class QueueManager:
     """Manages the song queue with voting and rules."""
     
-    def __init__(self, rules: RulesConfig, smart_voting_enabled: bool = True):
+    def __init__(self, rules: RulesConfig, blacklist: BlacklistConfig, smart_voting_enabled: bool = True, requests_paused: bool = False):
         """Initialize queue manager.
         
         Args:
             rules: Queue rules configuration
+            blacklist: Blacklist configuration
             smart_voting_enabled: Whether to enable smart voting
+            requests_paused: Whether song requests are currently paused
         """
         self.rules = rules
+        self.blacklist = blacklist
         self.smart_voting_enabled = smart_voting_enabled
+        self.requests_paused = requests_paused
+        
+        # Log blacklist on init
+        logger.info(f"QueueManager initialized with blacklist: {len(blacklist.songs)} songs, {len(blacklist.artists)} artists")
+        if blacklist.songs:
+            logger.info(f"Blocked songs: {blacklist.songs}")
+        if blacklist.artists:
+            logger.info(f"Blocked artists: {blacklist.artists}")
         
         self._queue: List[QueueItem] = []
         self._history: Dict[str, float] = {}  # URI -> timestamp
+        self._user_cooldowns: Dict[str, float] = {}  # username -> last_request_timestamp
         self._lock = asyncio.Lock()
     
     @property
@@ -65,6 +81,82 @@ class QueueManager:
                 count += 1
         return count
     
+    def check_user_cooldown(self, username: str) -> bool:
+        """Check if user is on cooldown for making requests.
+        
+        Args:
+            username: Username to check
+            
+        Returns:
+            True if user is on cooldown, False otherwise
+        """
+        if self.rules.user_request_cooldown_minutes == 0:
+            return False
+        
+        if username not in self._user_cooldowns:
+            return False
+        
+        last_request = self._user_cooldowns[username]
+        cooldown_seconds = self.rules.user_request_cooldown_minutes * 60
+        
+        return (time.time() - last_request) < cooldown_seconds
+    
+    def get_user_cooldown_remaining(self, username: str) -> int:
+        """Get remaining cooldown time for user in seconds.
+        
+        Args:
+            username: Username to check
+            
+        Returns:
+            Remaining seconds, 0 if not on cooldown
+        """
+        if not self.check_user_cooldown(username):
+            return 0
+        
+        last_request = self._user_cooldowns[username]
+        cooldown_seconds = self.rules.user_request_cooldown_minutes * 60
+        elapsed = time.time() - last_request
+        
+        return max(0, int(cooldown_seconds - elapsed))
+    
+    def update_blacklist(self, blacklist: BlacklistConfig) -> None:
+        """Update blacklist configuration.
+        
+        Args:
+            blacklist: New blacklist configuration
+        """
+        self.blacklist = blacklist
+        logger.info(f"Blacklist updated: {len(blacklist.songs)} songs, {len(blacklist.artists)} artists")
+    
+    def check_blacklist(self, song: Song) -> tuple[bool, str]:
+        """Check if song or artist is blacklisted.
+        
+        Args:
+            song: Song to check
+            
+        Returns:
+            Tuple of (is_blacklisted, reason) where reason is the matched blacklist entry
+        """
+        song_name_lower = song.name.lower()
+        artist_name_lower = song.artist.lower()
+        
+        logger.debug(f"Checking blacklist for: '{song.name}' by '{song.artist}'")
+        logger.debug(f"Current blacklist - Songs: {self.blacklist.songs}, Artists: {self.blacklist.artists}")
+        
+        # Check if song name matches any blacklisted song (partial match)
+        for blocked_song in self.blacklist.songs:
+            if blocked_song.lower() in song_name_lower:
+                logger.info(f"Song blocked by blacklist: {song.name} (matches '{blocked_song}')")
+                return True, f"Song '{blocked_song}'"
+        
+        # Check if artist name matches any blacklisted artist (partial match)
+        for blocked_artist in self.blacklist.artists:
+            if blocked_artist.lower() in artist_name_lower:
+                logger.info(f"Song blocked by blacklist: {song.name} by {song.artist} (artist matches '{blocked_artist}')")
+                return True, f"Artist '{blocked_artist}'"
+        
+        return False, ""
+    
     async def add_request(self, song: Song, username: str) -> RequestResult:
         """Add a song request to the queue.
         
@@ -76,6 +168,21 @@ class QueueManager:
             RequestResult indicating success or failure reason
         """
         async with self._lock:
+            # Check if requests are paused
+            if self.requests_paused:
+                return RequestResult.REQUESTS_PAUSED
+            
+            # Check user cooldown (before other checks to prevent spam)
+            if self.check_user_cooldown(username):
+                return RequestResult.USER_COOLDOWN
+            
+            # Check blacklist (early check to prevent blacklisted songs)
+            is_blacklisted, blacklist_reason = self.check_blacklist(song)
+            if is_blacklisted:
+                # Store reason in song object for later retrieval
+                song._blacklist_reason = blacklist_reason
+                return RequestResult.BLACKLISTED
+            
             # Check queue size
             if len(self._queue) >= self.rules.max_queue_size:
                 return RequestResult.QUEUE_FULL
@@ -92,10 +199,17 @@ class QueueManager:
             # Check if song already in queue
             existing = self._find_in_queue(song.uri)
             if existing:
-                if self.smart_voting_enabled and username not in existing.requesters:
+                # If smart voting is disabled, reject duplicate
+                if not self.smart_voting_enabled:
+                    return RequestResult.DUPLICATE
+                
+                # Smart voting: add vote if user hasn't voted yet
+                if username not in existing.requesters:
                     existing.votes += 1
                     existing.requesters.append(username)
                     logger.info(f"Vote added for {song.full_name} by {username} ({existing.votes} votes)")
+                    # Update user cooldown even for votes
+                    self._user_cooldowns[username] = time.time()
                     await self._sort_queue()
                     return RequestResult.VOTED
                 else:
@@ -114,6 +228,10 @@ class QueueManager:
             )
             
             self._queue.append(queue_item)
+            
+            # Update user cooldown timestamp
+            self._user_cooldowns[username] = time.time()
+            
             logger.info(f"Added {song.full_name} to queue (requested by {username})")
             
             await self._sort_queue()
@@ -134,6 +252,21 @@ class QueueManager:
                 logger.info(f"Removed {removed.song.full_name} from queue")
                 return True
             return False
+    
+    def remove_track_at_index(self, index: int) -> bool:
+        """Remove track at index (sync version for command handlers).
+        
+        Args:
+            index: Index of item to remove
+            
+        Returns:
+            True if removed, False if index invalid
+        """
+        if 0 <= index < len(self._queue):
+            removed = self._queue.pop(index)
+            logger.info(f"Removed {removed.song.full_name} from queue")
+            return True
+        return False
     
     async def clear_queue(self) -> None:
         """Clear all items from the queue."""
@@ -225,6 +358,16 @@ class QueueManager:
             self.smart_voting_enabled = enabled
             logger.info(f"Smart voting {'enabled' if enabled else 'disabled'}")
             await self._sort_queue()
+    
+    def set_requests_paused(self, paused: bool) -> None:
+        """Set whether song requests are paused.
+        
+        Args:
+            paused: True to pause requests, False to resume
+        """
+        self.requests_paused = paused
+        status = "paused" if paused else "resumed"
+        logger.info(f"Song requests {status}")
     
     def _find_in_queue(self, uri: str) -> Optional[QueueItem]:
         """Find item in queue by URI.

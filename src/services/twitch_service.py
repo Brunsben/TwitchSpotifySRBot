@@ -8,7 +8,8 @@ import twitchio
 from twitchio import eventsub
 from twitchio.ext import commands
 
-from ..models.config import TwitchConfig
+from ..models.config import TwitchConfig, CommandPermission
+from ..models.config import BotConfig
 
 logger = logging.getLogger(__name__)
 
@@ -18,33 +19,48 @@ class TwitchBotService(commands.Bot):
     
     def __init__(
         self,
-        config: TwitchConfig,
+        config: BotConfig,
         on_song_request: Callable[[str, str], str],
         on_skip: Optional[Callable[[str], str]] = None,
-        on_current_song: Optional[Callable[[str], str]] = None
+        on_current_song: Optional[Callable[[str], str]] = None,
+        on_blacklist: Optional[Callable[[str], str]] = None,
+        on_add_blacklist: Optional[Callable[[str, str], str]] = None,
+        on_remove_blacklist: Optional[Callable[[str, str], str]] = None,
+        on_queue: Optional[Callable[[str], str]] = None,
+        on_clear_queue: Optional[Callable[[str], str]] = None,
+        on_wrong_song: Optional[Callable[[str], str]] = None,
+        on_song_info: Optional[Callable[[str], str]] = None,
+        on_srhelp: Optional[Callable[[str], str]] = None,
+        on_pause_requests: Optional[Callable[[str], str]] = None,
+        on_resume_requests: Optional[Callable[[str], str]] = None,
+        on_pause_playback: Optional[Callable[[str], str]] = None,
+        on_resume_playback: Optional[Callable[[str], str]] = None
     ):
         """Initialize Twitch bot.
         
         Args:
-            config: Twitch configuration
+            config: Full bot configuration (BotConfig with command_permissions)
             on_song_request: Callback for song requests (query, username) -> response message
+            on_skip: Callback for skip command (username) -> response message
+            on_current_song: Callback for current song command (username) -> response message
+            on_blacklist: Callback for blacklist command (username) -> response message
             on_skip: Callback for skip command (username) -> response message
             on_current_song: Callback for current song command (username) -> response message
         """
         # Extract token without oauth: prefix
-        token = config.token
+        token = config.twitch.token
         if token.startswith("oauth:"):
             token = token[6:]
         
-        logger.info(f"Initializing TwitchIO 3.x bot for channel: {config.channel}")
-        logger.info(f"Using client_id: {config.client_id[:10]}...")
+        logger.info(f"Initializing TwitchIO 3.x bot for channel: {config.twitch.channel}")
+        logger.info(f"Using client_id: {config.twitch.client_id[:10]}...")
         
         # Validate token and get bot_id BEFORE initializing Bot
         # This is required because Bot.__init__() needs bot_id parameter
         try:
             headers = {
                 'Authorization': f'Bearer {token}',
-                'Client-Id': config.client_id
+                'Client-Id': config.twitch.client_id
             }
             response = requests.get('https://id.twitch.tv/oauth2/validate', headers=headers)
             response.raise_for_status()
@@ -58,8 +74,8 @@ class TwitchBotService(commands.Bot):
         # Initialize Bot (extends Client)
         # In TwitchIO 3.x, Bot requires bot_id parameter
         super().__init__(
-            client_id=config.client_id,
-            client_secret=config.client_secret,
+            client_id=config.twitch.client_id,
+            client_secret=config.twitch.client_secret,
             bot_id=bot_id,  # Required in TwitchIO 3.x
             prefix='!'
         )
@@ -67,10 +83,23 @@ class TwitchBotService(commands.Bot):
         # Store instance attributes
         self.prefix = '!'  # Required for command processing
         self.bot_config = config
+        self.twitch_config = config.twitch  # Store Twitch config separately for easy access
         self.user_token = token
         self.on_song_request_callback = on_song_request
         self.on_skip_callback = on_skip
         self.on_current_song_callback = on_current_song
+        self.on_blacklist_callback = on_blacklist
+        self.on_add_blacklist_callback = on_add_blacklist
+        self.on_remove_blacklist_callback = on_remove_blacklist
+        self.on_queue_callback = on_queue
+        self.on_clear_queue_callback = on_clear_queue
+        self.on_wrong_song_callback = on_wrong_song
+        self.on_song_info_callback = on_song_info
+        self.on_srhelp_callback = on_srhelp
+        self.on_pause_requests_callback = on_pause_requests
+        self.on_resume_requests_callback = on_resume_requests
+        self.on_pause_playback_callback = on_pause_playback
+        self.on_resume_playback_callback = on_resume_playback
         self._running = False
         self._channel_id = None  # Will be set during setup
         self._follower_cache = {}  # Cache: {user_id: (is_follower, timestamp)}
@@ -82,9 +111,9 @@ class TwitchBotService(commands.Bot):
         
         # Fetch the channel user to get broadcaster_user_id
         try:
-            users = await self.fetch_users(logins=[self.bot_config.channel])
+            users = await self.fetch_users(logins=[self.bot_config.twitch.channel])
             if not users:
-                logger.error(f"Channel '{self.bot_config.channel}' not found!")
+                logger.error(f"Channel '{self.bot_config.twitch.channel}' not found!")
                 return
             
             broadcaster = users[0]
@@ -120,7 +149,7 @@ class TwitchBotService(commands.Bot):
     async def event_ready(self):
         """Called when bot is ready."""
         logger.info(f"✓✓✓ Twitch bot is READY!")
-        logger.info(f"Channel: {self.bot_config.channel}")
+        logger.info(f"Channel: {self.bot_config.twitch.channel}")
         logger.info(f"Listening for chat messages via EventSub...")
         self._running = True
     
@@ -138,54 +167,6 @@ class TwitchBotService(commands.Bot):
             logger.error(f"Original message: {error.original}")
         if data:
             logger.error(f"Error data: {data}")
-    
-    async def _check_permissions(self, message) -> Optional[str]:
-        """Check if user has permission to make song requests.
-        
-        Args:
-            message: ChatMessage object
-            
-        Returns:
-            Error message if no permission, None if allowed
-        """
-        permission_level = self.bot_config.request_permission
-        
-        # Everyone allowed
-        if permission_level == "all":
-            return None
-        
-        # Check badges
-        badges = {badge.set_id for badge in message.badges} if message.badges else set()
-        username = message.chatter.name
-        
-        # Broadcaster and moderators always allowed
-        if "broadcaster" in badges or "moderator" in badges:
-            return None
-        
-        # Check for subscriber requirement
-        if permission_level == "subscribers":
-            # Check for any subscriber badge
-            subscriber_badges = {"subscriber", "founder", "vip"}
-            if not badges.intersection(subscriber_badges):
-                from ..utils.i18n import t
-                return t("chat.err_no_permission", user=username, requirement="Subscriber")
-        
-        # Check for follower requirement
-        elif permission_level == "followers":
-            # Subscribers/VIPs are always allowed (they're loyal supporters)
-            subscriber_badges = {"subscriber", "founder", "vip"}
-            if badges.intersection(subscriber_badges):
-                return None
-            
-            # Check if user is a follower via API
-            user_id = message.chatter.id
-            is_follower = await self._check_follower_status(user_id, username)
-            
-            if not is_follower:
-                from ..utils.i18n import t
-                return t("chat.err_no_permission", user=username, requirement="Follower")
-        
-        return None
     
     async def _check_follower_status(self, user_id: str, username: str) -> bool:
         """Check if user is a follower via Twitch API.
@@ -216,7 +197,7 @@ class TwitchBotService(commands.Bot):
             }
             headers = {
                 "Authorization": f"Bearer {self.user_token.replace('oauth:', '')}",
-                "Client-Id": self.bot_config.client_id
+                "Client-Id": self.bot_config.twitch.client_id
             }
             
             logger.debug(f"Checking follower status for {username} (ID: {user_id})")
@@ -245,6 +226,73 @@ class TwitchBotService(commands.Bot):
             logger.error(f"Error checking follower status for {username}: {e}")
             # On error, be lenient and allow
             return True
+    
+    async def _check_command_permission(self, command_name: str, message) -> tuple[bool, str]:
+        """Check if user has permission to use a command.
+        
+        Args:
+            command_name: Name of the command (sr, skip, currentsong, blacklist)
+            message: TwitchIO message object
+            
+        Returns:
+            Tuple of (has_permission, error_message_key)
+            error_message_key is empty string if permission granted
+        """
+        # Get required permission level for this command
+        command_perms = self.bot_config.command_permissions
+        required_perm = getattr(command_perms, command_name, CommandPermission.EVERYONE)
+        
+        # EVERYONE: Always allowed
+        if required_perm == CommandPermission.EVERYONE:
+            return True, ""
+        
+        # Get user info
+        chatter_name = message.chatter.name
+        chatter = message.chatter
+        
+        # Get badges (broadcaster, moderator, subscriber, vip)
+        badges = {}
+        if hasattr(chatter, 'badges'):
+            badges = {badge.set_id: badge.id for badge in chatter.badges}
+        
+        # BROADCASTER: Only broadcaster
+        if required_perm == CommandPermission.BROADCASTER:
+            if "broadcaster" in badges:
+                return True, ""
+            return False, "err_cmd_perm_broadcaster"
+        
+        # MODERATORS: Broadcaster or Moderator
+        if required_perm == CommandPermission.MODERATORS:
+            if "broadcaster" in badges or "moderator" in badges:
+                return True, ""
+            return False, "err_cmd_perm_moderators"
+        
+        # SUBSCRIBERS: Broadcaster, Moderator, or Subscriber
+        if required_perm == CommandPermission.SUBSCRIBERS:
+            if "broadcaster" in badges or "moderator" in badges or "subscriber" in badges:
+                return True, ""
+            return False, "err_cmd_perm_subscribers"
+        
+        # FOLLOWERS: Check follower status
+        if required_perm == CommandPermission.FOLLOWERS:
+            if "broadcaster" in badges or "moderator" in badges or "subscriber" in badges:
+                return True, ""
+            
+            # Check follower status via API
+            try:
+                user_id = chatter.id
+                is_follower = await self._check_follower_status(chatter_name, user_id)
+                if is_follower:
+                    return True, ""
+                else:
+                    return False, "err_cmd_perm_followers"
+            except Exception as e:
+                logger.error(f"Error checking follower status for {chatter_name}: {e}")
+                # On error, be lenient
+                return True, ""
+        
+        # Default: Allow
+        return True, ""
     
     async def event_message(self, message) -> None:
         """Handle chat messages from EventSub.
@@ -280,10 +328,11 @@ class TwitchBotService(commands.Bot):
             
             logger.info(f"!sr command from {username}: '{query}'")
             
-            # Check permissions
-            permission_result = await self._check_permissions(message)
-            if permission_result:
-                await message.respond(permission_result)
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('sr', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
                 return
             
             if not query:
@@ -309,10 +358,11 @@ class TwitchBotService(commands.Bot):
             username = chatter_name
             logger.info(f"!skip command from {username}")
             
-            # Check if user is broadcaster or moderator
-            badges = {badge.set_id for badge in message.badges} if message.badges else set()
-            if "broadcaster" not in badges and "moderator" not in badges:
-                await message.respond(f"@{username} Nur Broadcaster und Moderatoren können Songs überspringen.")
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('skip', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
                 return
             
             if self.on_skip_callback:
@@ -329,6 +379,13 @@ class TwitchBotService(commands.Bot):
             username = chatter_name
             logger.info(f"!{command_name} command from {username}")
             
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('currentsong', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
             if self.on_current_song_callback:
                 try:
                     response = self.on_current_song_callback(username)
@@ -338,11 +395,315 @@ class TwitchBotService(commands.Bot):
                     await message.respond(f"@{username} Fehler beim Abrufen des aktuellen Songs.")
             else:
                 await message.respond(f"@{username} Aktuelle Song-Funktion nicht verfügbar.")
+        
+        elif command_name == 'blacklist':
+            username = chatter_name
+            logger.info(f"!blacklist command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('blacklist', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_blacklist_callback:
+                try:
+                    response = self.on_blacklist_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in blacklist handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Abrufen der Blacklist.")
+            else:
+                await message.respond(f"@{username} Blacklist-Funktion nicht verfügbar.")
+        
+        elif command_name == 'addblacklist':
+            username = chatter_name
+            entry = parts[1] if len(parts) > 1 else ''
+            logger.info(f"!addblacklist command from {username}: '{entry}'")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('addblacklist', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if not entry:
+                await message.respond(f"@{username} Bitte gib einen Song oder Artist an.")
+                return
+            
+            if self.on_add_blacklist_callback:
+                try:
+                    response = self.on_add_blacklist_callback(username, entry)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in addblacklist handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Hinzufügen zur Blacklist.")
+            else:
+                await message.respond(f"@{username} Blacklist-Funktion nicht verfügbar.")
+        
+        elif command_name == 'removeblacklist':
+            username = chatter_name
+            entry = parts[1] if len(parts) > 1 else ''
+            logger.info(f"!removeblacklist command from {username}: '{entry}'")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('removeblacklist', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if not entry:
+                await message.respond(f"@{username} Bitte gib einen Song oder Artist an.")
+                return
+            
+            if self.on_remove_blacklist_callback:
+                try:
+                    response = self.on_remove_blacklist_callback(username, entry)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in removeblacklist handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Entfernen von der Blacklist.")
+            else:
+                await message.respond(f"@{username} Blacklist-Funktion nicht verfügbar.")
+        
+        elif command_name == 'queue':
+            username = chatter_name
+            logger.info(f"!queue command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('queue', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_queue_callback:
+                try:
+                    response = self.on_queue_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in queue handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Abrufen der Queue.")
+            else:
+                await message.respond(f"@{username} Queue-Funktion nicht verfügbar.")
+        
+        elif command_name == 'clearqueue':
+            username = chatter_name
+            logger.info(f"!clearqueue command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('clearqueue', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_clear_queue_callback:
+                try:
+                    response = self.on_clear_queue_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in clearqueue handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Leeren der Queue.")
+            else:
+                await message.respond(f"@{username} Queue-Funktion nicht verfügbar.")
+        
+        elif command_name == 'songinfo':
+            username = chatter_name
+            logger.info(f"!songinfo command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('songinfo', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_song_info_callback:
+                try:
+                    response = self.on_song_info_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in songinfo handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Abrufen der Song-Informationen.")
+            else:
+                await message.respond(f"@{username} Funktion nicht verfügbar.")
+        
+        elif command_name == 'wrongsong' or command_name == 'oops':
+            username = chatter_name
+            logger.info(f"!wrongsong command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('wrongsong', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_wrong_song_callback:
+                try:
+                    response = self.on_wrong_song_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in wrongsong handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Entfernen.")
+            else:
+                await message.respond(f"@{username} Funktion nicht verfügbar.")
+        
+        elif command_name == 'pauserequests':
+            username = chatter_name
+            logger.info(f"!pauserequests command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('pauserequests', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_pause_requests_callback:
+                try:
+                    response = self.on_pause_requests_callback(username)
+                    if response:
+                        await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in pauserequests handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Pausieren der Requests.")
+            else:
+                await message.respond(f"@{username} Funktion nicht verfügbar.")
+        
+        elif command_name == 'resumerequests':
+            username = chatter_name
+            logger.info(f"!resumerequests command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('resumerequests', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_resume_requests_callback:
+                try:
+                    response = self.on_resume_requests_callback(username)
+                    if response:
+                        await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in resumerequests handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Fortsetzen der Requests.")
+            else:
+                await message.respond(f"@{username} Funktion nicht verfügbar.")
+        
+        elif command_name == 'pausesr':
+            username = chatter_name
+            logger.info(f"!pausesr command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('pausesr', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_pause_playback_callback:
+                try:
+                    response = self.on_pause_playback_callback(username)
+                    if response:
+                        await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in pausesr handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Pausieren.")
+            else:
+                await message.respond(f"@{username} Funktion nicht verfügbar.")
+        
+        elif command_name == 'resumesr':
+            username = chatter_name
+            logger.info(f"!resumesr command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('resumesr', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_resume_playback_callback:
+                try:
+                    response = self.on_resume_playback_callback(username)
+                    if response:
+                        await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in resumesr handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Fortsetzen.")
+            else:
+                await message.respond(f"@{username} Funktion nicht verfügbar.")
+        
+        elif command_name == 'srhelp' or command_name == 'commands':
+            username = chatter_name
+            logger.info(f"!srhelp command from {username}")
+            
+            # Check command permission
+            has_perm, error_key = await self._check_command_permission('srhelp', message)
+            if not has_perm:
+                error_msg = self.i18n.get(error_key, user=username)
+                await message.respond(error_msg)
+                return
+            
+            if self.on_srhelp_callback:
+                try:
+                    response = self.on_srhelp_callback(username)
+                    await message.respond(response)
+                except Exception as e:
+                    logger.error(f"Error in srhelp handler:", exc_info=True)
+                    await message.respond(f"@{username} Fehler beim Abrufen der Hilfe.")
+            else:
+                await message.respond(f"@{username} Hilfe nicht verfügbar.")
+    
+    async def _handle_pause_requests(self, message) -> None:
+        """Handle !pauserequests command."""
+        username = message.chatter.name
+        logger.info(f"!pauserequests command from {username}")
+        
+        # Check permissions
+        allowed, error_key = await self._check_command_permission(message, "pauserequests")
+        if not allowed:
+            await message.respond(t(error_key, user=username))
+            return
+        
+        # Call callback
+        if self.on_pause_requests_callback:
+            response = self.on_pause_requests_callback(username)
+            if response:
+                await message.respond(response)
+        else:
+            await message.respond(f"@{username} Funktion nicht verfügbar.")
+    
+    async def _handle_resume_requests(self, message) -> None:
+        """Handle !resumerequests command."""
+        username = message.chatter.name
+        logger.info(f"!resumerequests command from {username}")
+        
+        # Check permissions
+        allowed, error_key = await self._check_command_permission(message, "resumerequests")
+        if not allowed:
+            await message.respond(t(error_key, user=username))
+            return
+        
+        # Call callback
+        if self.on_resume_requests_callback:
+            response = self.on_resume_requests_callback(username)
+            if response:
+                await message.respond(response)
+        else:
+            await message.respond(f"@{username} Funktion nicht verfügbar.")
     
     async def start_bot(self) -> None:
         """Start the Twitch bot."""
         try:
-            logger.info(f"Starting Twitch bot for channel: {self.bot_config.channel}")
+            logger.info(f"Starting Twitch bot for channel: {self.twitch_config.channel}")
             await self.start()
         except Exception as e:
             logger.error(f"Error starting Twitch bot: {e}")

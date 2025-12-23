@@ -16,5 +16,221 @@
     "requester": "Autopilot",
     "timestamp": "2025-12-14T23:42:53.183866",
     "was_skipped": false
+  },
+  {
+    "song_name": "Verdamp lang her",
+    "artist": "BAP",
+    "uri": "spotify:track:12Gf7Ffl7pxj7mQF1ehRBy",
+    "duration_ms": 348333,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:30:44.461287",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Verdamp lang her",
+    "artist": "BAP",
+    "uri": "spotify:track:12Gf7Ffl7pxj7mQF1ehRBy",
+    "duration_ms": 348333,
+    "requester": "🤖 Autopilot",
+    "timestamp": "2025-12-23T16:31:23.773922",
+    "was_skipped": true
+  },
+  {
+    "song_name": "Layla",
+    "artist": "DJ Robin",
+    "uri": "spotify:track:5ucyKDPjLpYLGadsRO1wSB",
+    "duration_ms": 185706,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:31:27.038622",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Wackelkontakt",
+    "artist": "Oimara",
+    "uri": "spotify:track:4x7j9ed3FRH6CHj27kiTQ3",
+    "duration_ms": 168801,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:32:49.430889",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Walk Of Life - Remastered 1996",
+    "artist": "Dire Straits",
+    "uri": "spotify:track:5Hk4Mpex0s2ndUpDQ5v2rU",
+    "duration_ms": 248893,
+    "requester": "uprisin6",
+    "timestamp": "2025-12-23T16:34:13.677825",
+    "was_skipped": false
+  },
+  {
+    "song_name": "ECHT - Techno Mix",
+    "artist": "NOISETIME",
+    "uri": "spotify:track:3zvnqac9doHz3NlmO5DGoV",
+    "duration_ms": 124327,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:40:52.439654",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Ich will immer wieder... dieses Fieber spür'n",
+    "artist": "Helene Fischer",
+    "uri": "spotify:track:70fRUZsAxNKuxTy8gp4nKT",
+    "duration_ms": 210133,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:43:57.166158",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Now You're Gone (feat. DJ Mental Theos Bazzheadz) - Radio Edit",
+    "artist": "Basshunter",
+    "uri": "spotify:track:6I8sydIAJCDzKWDhmxQMIT",
+    "duration_ms": 206226,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:47:35.571289",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Should I Stay or Should I Go - Remastered",
+    "artist": "The Clash",
+    "uri": "spotify:track:39shmbIHICJ2Wxnk1fPSdz",
+    "duration_ms": 188987,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:52:57.233024",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Manchmal möchte ich schon mit dir",
+    "artist": "Roland Kaiser",
+    "uri": "spotify:track:5VkR7KkAuWKgj32oQMrUHD",
+    "duration_ms": 216506,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T16:53:23.407494",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Everytime We Touch",
+    "artist": "Cascada",
+    "uri": "spotify:track:5YJtMNWKe55yr49cyJgxva",
+    "duration_ms": 197124,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T17:42:25.658304",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Zombie",
+    "artist": "The Cranberries",
+    "uri": "spotify:track:2IZZqH4K02UIYg5EohpNHF",
+    "duration_ms": 306426,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T17:44:14.384231",
+    "was_skipped": false
+  },
+  {
+    "song_name": "We’re Going to Ibiza!",
+    "artist": "Vengaboys",
+    "uri": "spotify:track:0b8PKDeFc2T5u9cRbLLv2r",
+    "duration_ms": 217539,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T17:48:29.532213",
+    "was_skipped": false
+  },
+  {
+    "song_name": "APRES SKI",
+    "artist": "Tream",
+    "uri": "spotify:track:2rKSoNQsHt0oRWZmnBZUNe",
+    "duration_ms": 162362,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T17:49:28.523643",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Mambo No. 5 (A Little Bit of...)",
+    "artist": "Lou Bega",
+    "uri": "spotify:track:5lA6mFOvaiienokVbTZEQx",
+    "duration_ms": 219600,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T17:50:24.561207",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Mambo No. 5 (A Little Bit of...)",
+    "artist": "Lou Bega",
+    "uri": "spotify:track:5lA6mFOvaiienokVbTZEQx",
+    "duration_ms": 219600,
+    "requester": "🤖 Autopilot",
+    "timestamp": "2025-12-23T17:51:23.500445",
+    "was_skipped": true
+  },
+  {
+    "song_name": "Drop That Low (When I Dip)",
+    "artist": "Tujamo",
+    "uri": "spotify:track:0WSjVLITbxV6kVXndziQDm",
+    "duration_ms": 159999,
+    "requester": "uprisin6",
+    "timestamp": "2025-12-23T17:51:27.488454",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Old Time Rock & Roll",
+    "artist": "Bob Seger",
+    "uri": "spotify:track:5EOoMWIB9iK4ZpcSex9Ec7",
+    "duration_ms": 194146,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:03:47.802496",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Friday I'm In Love",
+    "artist": "The Cure",
+    "uri": "spotify:track:4QlzkaRHtU8gAdwqjWmO8n",
+    "duration_ms": 215160,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:06:33.514292",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Major Tom (Völlig Losgelöst)",
+    "artist": "Peter Schilling",
+    "uri": "spotify:track:2qZQtey4lTwvvABVMrO4h8",
+    "duration_ms": 273746,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:06:43.139163",
+    "was_skipped": false
+  },
+  {
+    "song_name": "BEYCHLKIEN",
+    "artist": "Tream",
+    "uri": "spotify:track:3CoJdCUU7wREaZ9o24NjOU",
+    "duration_ms": 162272,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:08:50.364255",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Major Tom (Völlig Losgelöst)",
+    "artist": "Peter Schilling",
+    "uri": "spotify:track:2qZQtey4lTwvvABVMrO4h8",
+    "duration_ms": 273746,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:09:25.082198",
+    "was_skipped": false
+  },
+  {
+    "song_name": "Schnapsidee",
+    "artist": "Mia Julia",
+    "uri": "spotify:track:7vAX6k5u0jXPpWS662Hwq4",
+    "duration_ms": 179866,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:10:18.838441",
+    "was_skipped": false
+  },
+  {
+    "song_name": "L'amour toujours - Radio Edit",
+    "artist": "Dzeko & Torres",
+    "uri": "spotify:track:4nYKcVxSChmk3RvFbZjYob",
+    "duration_ms": 162461,
+    "requester": "Autopilot",
+    "timestamp": "2025-12-23T18:19:21.061561",
+    "was_skipped": false
   }
 ]
