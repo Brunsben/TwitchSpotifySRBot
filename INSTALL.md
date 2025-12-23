@@ -114,8 +114,6 @@ Für neue Versionen:
 
 Bei Fragen oder Problemen:
 - GitHub Issues: [Link zum Repo]
-- Twitch: uprisin6
-- Discord: [Falls vorhanden]
 
 ---
 
