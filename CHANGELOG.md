@@ -5,17 +5,69 @@ All notable changes to Twitch SR Bot will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-12-24 🎉
+
+### 🎊 First Stable Release
+
+**Major Milestone**: Transition from beta to production-ready v1.0.0!
+
+#### UI/UX Improvements
+
+- **Settings Window Optimization**:
+  - Increased window width from 600px to 800px for better readability
+  - Settings window now stays open after saving (no auto-close)
+  - Confirmation dialog shows after successful save
+  - Reorganized settings tabs for better logical grouping:
+    - ⚙️ **Allgemein** (formerly "Regeln & Limits") - Language + Queue Limits
+    - ⏱️ **Cooldowns** - All cooldowns in one place (Song, User, and Command cooldowns)
+    - 🔐 **Berechtigungen** (formerly "Command Rechte") - Command permissions
+    - 🚫 **Blacklist** - Blocked songs/artists
+    - 💬 **Twitch** - Twitch login
+    - 🎵 **Spotify** - Spotify API
+
+- **OBS Overlay Redesign**:
+  - Dark theme matching bot design language
+  - Background: Linear gradient (#181818 → #282828)
+  - Border: 2px solid Spotify green (#1DB954)
+  - Subtle green glow shadow effect
+  - Professional, cohesive visual identity
+
+### 📝 Production Ready
+
+- **Comprehensive Testing**: All features tested and stable
+- **Complete Documentation**: README, TROUBLESHOOTING, OBS_SETUP, INSTALL guides
+- **Error Handling**: Robust error handling across all components
+- **Performance**: Optimized for long-running streaming sessions
+- **Internationalization**: Full German/English support
+
+### 🎯 Feature Complete
+
+- ✅ 15 Chat Commands with flexible permissions
+- ✅ Smart Voting System
+- ✅ Duplicate Detection
+- ✅ Blacklist System (Songs & Artists)
+- ✅ Anti-Spam Cooldowns (Song, User, Command)
+- ✅ OBS Overlay Integration
+- ✅ Live Config Updates
+- ✅ Queue Management
+- ✅ Spotify Playback Control
+- ✅ Multi-Language Support (DE/EN)
+
+---
+
 ## [0.9.9] - 2025-12-23
 
 ### 🎉 Major Features
 
 #### Flexible Command Permission System
+
 - **5-Tier Permission Levels**: EVERYONE → FOLLOWERS → SUBSCRIBERS → MODERATORS → BROADCASTER
 - **Per-Command Configuration**: Set individual permission levels for all 15 commands via GUI
 - **Full GUI Integration**: New "Commands" tab in settings with dropdown menus for each command
 - Replace old hardcoded permission system with flexible, user-configurable approach
 
 #### 12 New Chat Commands (3 → 15 Total)
+
 - **Queue Management**:
   - `!queue` - Display first 5 songs in queue (EVERYONE)
   - `!clearqueue` - Clear entire queue (MODERATORS)
@@ -39,12 +91,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `!resumesr` - Resume Spotify playback (MODERATORS)
 
 #### Anti-Spam & Cooldown System
+
 - **User-Cooldown**: Configurable per-user cooldown (default: 3 minutes, 0 = disabled)
 - **Song-Cooldown**: Configurable per-song cooldown (default: 15 minutes, 0 = disabled)
 - **GUI Integration**: Both cooldowns configurable in settings
 - Cooldown bypass for moderators and broadcaster
 
 #### Blacklist System
+
 - **Dual Mode**: Block specific songs OR entire artists
 - **Partial Matching**: Automatically matches song/artist names
 - **Live Updates**: Changes apply immediately without restart
@@ -52,12 +106,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Persistence**: Blacklist saved to config file
 
 #### Duplicate Detection
+
 - **Smart Voting Integration**: Only active when Smart Voting is OFF
 - **Queue Scanning**: Prevents duplicate songs in queue
 - **User Feedback**: Chat notification when duplicate detected
 - Bypass for moderators and broadcaster
 
 #### Spotify Status Monitoring
+
 - **Real-Time Status Display**: GUI shows Spotify connection state
 - **Visual Indicators**:
   - ✅ Spotify: Verbunden (green) - Active and connected
@@ -69,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📚 Documentation
 
 #### OBS Setup Guide (NEW)
+
 - **340 lines** of comprehensive documentation
 - **Full API Reference**: All WebSocket and REST endpoints documented
 - **Code Examples**: JavaScript, Python, and cURL examples
@@ -77,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - File: `OBS_SETUP.md`
 
 #### Internationalization (i18n)
+
 - **Complete German/English translations** for all new features
 - **15 command descriptions** in both languages
 - **Error messages** for all scenarios (Spotify offline, duplicate songs, cooldowns, etc.)
@@ -132,6 +190,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚙️ Configuration
 
 New config entries:
+
 - `user_cooldown_seconds` (int, default: 180)
 - `song_cooldown_minutes` (int, default: 15)
 - `blacklist` (list of strings)
@@ -143,6 +202,7 @@ New config entries:
 ## [0.9.8] - 2025-12-XX
 
 ### Features
+
 - Modern GUI with CustomTkinter
 - Spotify integration with Spotipy
 - Twitch bot with TwitchIO (EventSub WebSocket)
@@ -151,6 +211,7 @@ New config entries:
 - Basic chat commands (!sr, !skip, !currentsong)
 
 ### Technical
+
 - Python 3.13.7
 - Async/await architecture
 - Pydantic 2.x config validation

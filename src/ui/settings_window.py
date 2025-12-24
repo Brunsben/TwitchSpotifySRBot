@@ -31,7 +31,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self.on_save_callback = on_save
         
         self.title(t("settings.title"))
-        self.geometry("600x750")
+        self.geometry("800x750")
         self.attributes("-topmost", True)
         
         # Grid setup
@@ -43,16 +43,18 @@ class SettingsWindow(ctk.CTkToplevel):
         self.tabview.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
         
         # Create tabs
-        tab_rules = self.tabview.add("⚙️ Regeln & Limits")
+        tab_general = self.tabview.add("⚙️ Allgemein")
+        tab_cooldowns = self.tabview.add("⏱️ Cooldowns")
+        tab_permissions = self.tabview.add("🔐 Berechtigungen")
         tab_blacklist = self.tabview.add("🚫 Blacklist")
-        tab_permissions = self.tabview.add("🔐 Command Rechte")
-        tab_twitch = self.tabview.add("💬 Twitch Login")
-        tab_spotify = self.tabview.add("🎵 Spotify API")
+        tab_twitch = self.tabview.add("💬 Twitch")
+        tab_spotify = self.tabview.add("🎵 Spotify")
         
         # Configure each tab
-        self._setup_rules_tab(tab_rules, config)
-        self._setup_blacklist_tab(tab_blacklist, config)
+        self._setup_general_tab(tab_general, config)
+        self._setup_cooldowns_tab(tab_cooldowns, config)
         self._setup_permissions_tab(tab_permissions, config)
+        self._setup_blacklist_tab(tab_blacklist, config)
         self._setup_twitch_tab(tab_twitch, config)
         self._setup_spotify_tab(tab_spotify, config)
         
@@ -212,8 +214,8 @@ class SettingsWindow(ctk.CTkToplevel):
             wraplength=400
         ).pack(pady=(0, 10), padx=10)
     
-    def _setup_rules_tab(self, parent, config: BotConfig):
-        """Setup rules and limits tab."""
+    def _setup_general_tab(self, parent, config: BotConfig):
+        """Setup general settings tab."""
         scroll = ctk.CTkScrollableFrame(parent, fg_color="transparent")
         scroll.pack(fill="both", expand=True, padx=5, pady=5)
         
@@ -274,18 +276,6 @@ class SettingsWindow(ctk.CTkToplevel):
             scroll,
             t("settings.lbl_max_len"),
             str(config.rules.max_song_length_minutes)
-        )
-        
-        self.entry_cooldown = self._create_input(
-            scroll,
-            t("settings.lbl_cooldown"),
-            str(config.rules.song_cooldown_minutes)
-        )
-        
-        self.entry_user_cooldown = self._create_input(
-            scroll,
-            t("settings.lbl_user_cooldown") + " - " + t("settings.desc_user_cooldown"),
-            str(config.rules.user_request_cooldown_minutes)
         )
     
     def _setup_blacklist_tab(self, parent, config: BotConfig):
@@ -428,6 +418,125 @@ class SettingsWindow(ctk.CTkToplevel):
             
             self.cmd_permission_dropdowns[cmd_key] = (dropdown, perm_options)
     
+    def _setup_cooldowns_tab(self, parent, config: BotConfig):
+        """Setup Command Cooldowns tab."""
+        scroll = ctk.CTkScrollableFrame(parent, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Header
+        ctk.CTkLabel(
+            scroll,            text="Song & User Cooldowns",
+            font=("Roboto", 16, "bold")
+        ).pack(pady=(10, 5))
+        
+        ctk.CTkLabel(
+            scroll,
+            text="Globale Cooldowns für Songs und User-Requests (in Minuten)",
+            font=("Arial", 11),
+            text_color="#999"
+        ).pack(fill="x", padx=10, pady=(0, 15))
+        
+        # Song Cooldown
+        self.entry_cooldown = self._create_input(
+            scroll,
+            t("settings.lbl_cooldown"),
+            str(config.rules.song_cooldown_minutes)
+        )
+        
+        # User Cooldown
+        self.entry_user_cooldown = self._create_input(
+            scroll,
+            t("settings.lbl_user_cooldown") + " - " + t("settings.desc_user_cooldown"),
+            str(config.rules.user_request_cooldown_minutes)
+        )
+        
+        self._create_divider(scroll)
+        
+        # Command Cooldowns Header
+        ctk.CTkLabel(
+            scroll,            text="Command Cooldowns",
+            font=("Roboto", 18, "bold")
+        ).pack(pady=(10, 5))
+        
+        ctk.CTkLabel(
+            scroll,
+            text="Setze individuelle Cooldowns für jeden Command (in Sekunden). 0 = deaktiviert.",
+            font=("Roboto", 12),
+            text_color="#888"
+        ).pack(pady=(0, 20))
+        
+        # Store entry fields for save
+        self.cooldown_entries = {}
+        
+        # Commands to configure with descriptions
+        commands = [
+            ("!sr", "sr", "Song Request", 0),
+            ("!skip", "skip", "Song überspringen", 5),
+            ("!currentsong", "currentsong", "Aktuellen Song anzeigen", 10),
+            ("!queue", "queue", "Warteschlange anzeigen", 10),
+            ("!wrongsong", "wrongsong", "Eigenen letzten Song entfernen", 5),
+            ("!songinfo", "songinfo", "Details zum aktuellen Song", 10),
+            ("!blacklist", "blacklist", "Blacklist anzeigen", 10),
+            ("!addblacklist", "addblacklist", "Zur Blacklist hinzufügen", 5),
+            ("!removeblacklist", "removeblacklist", "Von Blacklist entfernen", 5),
+            ("!clearqueue", "clearqueue", "Warteschlange leeren", 10),
+            ("!pauserequests", "pauserequests", "Song Requests pausieren", 5),
+            ("!resumerequests", "resumerequests", "Song Requests fortsetzen", 5),
+            ("!pausesr", "pausesr", "Wiedergabe pausieren", 5),
+            ("!resumesr", "resumesr", "Wiedergabe fortsetzen", 5),
+            ("!srhelp", "srhelp", "Verfügbare Commands anzeigen", 30)
+        ]
+        
+        # Create table-like layout
+        for cmd_display, cmd_key, cmd_desc, default_cooldown in commands:
+            frame = ctk.CTkFrame(scroll, fg_color="#333", corner_radius=8)
+            frame.pack(fill="x", padx=10, pady=5)
+            
+            # Left side: Command name and description
+            left_frame = ctk.CTkFrame(frame, fg_color="transparent")
+            left_frame.pack(side="left", fill="both", expand=True, padx=15, pady=10)
+            
+            ctk.CTkLabel(
+                left_frame,
+                text=cmd_display,
+                font=("Roboto Mono", 14, "bold"),
+                text_color="#1DB954"
+            ).pack(anchor="w")
+            
+            ctk.CTkLabel(
+                left_frame,
+                text=cmd_desc,
+                font=("Roboto", 11),
+                text_color="#888"
+            ).pack(anchor="w")
+            
+            # Right side: Cooldown input (seconds)
+            right_frame = ctk.CTkFrame(frame, fg_color="transparent")
+            right_frame.pack(side="right", padx=15, pady=10)
+            
+            current_cooldown = getattr(config.command_cooldowns, cmd_key, default_cooldown)
+            
+            entry = ctk.CTkEntry(
+                right_frame,
+                width=80,
+                height=35,
+                fg_color="#222",
+                border_color="#555",
+                justify="center",
+                font=("Roboto", 14)
+            )
+            entry.insert(0, str(current_cooldown))
+            entry.pack(side="left")
+            
+            ctk.CTkLabel(
+                right_frame,
+                text="Sek",
+                font=("Roboto", 12),
+                text_color="#888"
+            ).pack(side="left", padx=(5, 0))
+            
+            self.cooldown_entries[cmd_key] = entry
+    
     def _create_section_header(self, parent, text: str):
         """Create section header.
         
@@ -487,7 +596,7 @@ class SettingsWindow(ctk.CTkToplevel):
     
     def _save_settings(self):
         """Save settings and close window."""
-        from ..models.config import CommandPermissions
+        from ..models.config import CommandPermissions, CommandCooldowns
         
         try:
             # Create new config
@@ -500,6 +609,17 @@ class SettingsWindow(ctk.CTkToplevel):
             for cmd_key, (dropdown, perm_options) in self.cmd_permission_dropdowns.items():
                 selected_label = dropdown.get()
                 cmd_perms[cmd_key] = perm_options[selected_label]
+            
+            # Build command cooldowns from entries
+            cmd_cooldowns = {}
+            for cmd_key, entry in self.cooldown_entries.items():
+                try:
+                    cooldown_value = int(entry.get())
+                    if cooldown_value < 0:
+                        cooldown_value = 0
+                    cmd_cooldowns[cmd_key] = cooldown_value
+                except ValueError:
+                    cmd_cooldowns[cmd_key] = 0
             
             new_config = BotConfig(
                 language=self.combo_lang.get(),
@@ -526,14 +646,15 @@ class SettingsWindow(ctk.CTkToplevel):
                     artists=[a.strip() for a in self.text_blacklist_artists.get("1.0", "end").strip().split("\n") if a.strip()]
                 ),
                 command_permissions=CommandPermissions(**cmd_perms),
+                command_cooldowns=CommandCooldowns(**cmd_cooldowns),
                 smart_voting_enabled=self.config.smart_voting_enabled
             )
             
             # Call save callback
             self.on_save_callback(new_config)
             
+            messagebox.showinfo("Gespeichert", "Einstellungen wurden erfolgreich gespeichert!")
             logger.info("Settings saved successfully")
-            self.destroy()
             
         except ValueError as e:
             messagebox.showerror("Invalid Input", f"Please check your input:\n{e}")

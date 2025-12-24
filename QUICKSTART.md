@@ -12,6 +12,7 @@ pip install -r requirements.txt
 ### 2. Erste Konfiguration
 
 1. Starte den Bot:
+
    ```bash
    python app.py
    ```
@@ -22,10 +23,10 @@ pip install -r requirements.txt
 
    **Twitch:**
    - Kanal: `dein_twitch_name` (kleingeschrieben!)
-   - Token: Hole dir einen auf https://twitchapps.com/tmi/
+   - Token: Hole dir einen auf <https://twitchapps.com/tmi/>
 
    **Spotify:**
-   - Client ID & Secret: Erstelle eine App auf https://developer.spotify.com/dashboard/
+   - Client ID & Secret: Erstelle eine App auf <https://developer.spotify.com/dashboard/>
    - Redirect URI in Spotify App: `http://127.0.0.1:8888/callback`
 
    **Optional - Autopilot:**
@@ -43,7 +44,7 @@ pip install -r requirements.txt
 
 ## 💬 Chat Commands
 
-```
+```text
 !sr Songname             # Song suchen
 !sr Spotify-Link         # Direkter Link
 ```
@@ -69,4 +70,4 @@ Siehe `README.md` → Troubleshooting
 
 ---
 
-**Viel Erfolg! 🎵**
+### Viel Erfolg! 🎵

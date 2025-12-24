@@ -364,18 +364,16 @@ class BotOrchestrator:
             album = track_info['album']['name']
             release_date = track_info['album']['release_date']
             year = release_date.split('-')[0] if release_date else 'Unbekannt'
-            popularity = track_info['popularity']  # 0-100
             duration_ms = track_info['duration_ms']
             duration_min = duration_ms // 60000
             duration_sec = (duration_ms % 60000) // 1000
             
-            # Build response
+            # Build response with basic info
             info_parts = [
                 f"🎵 {song.full_name}",
                 f"📀 Album: {album}",
                 f"📅 Jahr: {year}",
-                f"⏱️ Länge: {duration_min}:{duration_sec:02d}",
-                f"📊 Popularity: {popularity}/100"
+                f"⏱️ Länge: {duration_min}:{duration_sec:02d}"
             ]
             
             # Add requester if available

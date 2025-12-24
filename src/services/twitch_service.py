@@ -1,7 +1,8 @@
 """Twitch bot service for handling chat commands."""
 import asyncio
 import logging
-from typing import Callable, Optional
+import time
+from typing import Callable, Optional, Dict, Tuple
 
 import requests
 import twitchio
@@ -104,6 +105,9 @@ class TwitchBotService(commands.Bot):
         self._channel_id = None  # Will be set during setup
         self._follower_cache = {}  # Cache: {user_id: (is_follower, timestamp)}
         self._follower_cache_ttl = 300  # 5 minutes cache
+        
+        # Cooldown tracking: {command_name: last_use_timestamp}
+        self._command_cooldowns: Dict[str, float] = {}
     
     async def setup_hook(self) -> None:
         """Called after login but before ready. Setup EventSub subscriptions here."""
@@ -294,6 +298,40 @@ class TwitchBotService(commands.Bot):
         # Default: Allow
         return True, ""
     
+    def _check_command_cooldown(self, command_name: str, username: str) -> Tuple[bool, int]:
+        """Check if command is on cooldown.
+        
+        Args:
+            command_name: Name of the command (sr, skip, currentsong, etc.)
+            username: Username executing the command
+            
+        Returns:
+            Tuple of (can_execute, remaining_seconds)
+            If can_execute is True, remaining_seconds is 0
+        """
+        # Get cooldown setting for this command
+        command_cooldowns = self.bot_config.command_cooldowns
+        cooldown_seconds = getattr(command_cooldowns, command_name, 0)
+        
+        # If cooldown is 0 or disabled, always allow
+        if cooldown_seconds <= 0:
+            return True, 0
+        
+        # Check last usage
+        cooldown_key = f"{command_name}_{username}"
+        last_use = self._command_cooldowns.get(cooldown_key, 0)
+        current_time = time.time()
+        elapsed = current_time - last_use
+        
+        if elapsed < cooldown_seconds:
+            # Still on cooldown
+            remaining = int(cooldown_seconds - elapsed) + 1
+            return False, remaining
+        
+        # Not on cooldown - update last use time
+        self._command_cooldowns[cooldown_key] = current_time
+        return True, 0
+    
     async def event_message(self, message) -> None:
         """Handle chat messages from EventSub.
         
@@ -335,6 +373,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('sr', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if not query:
                 # Respond using EventSub ChatMessage.respond() method
                 await message.respond(f"@{username} Bitte gib einen Songnamen oder Link an.")
@@ -365,6 +409,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('skip', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_skip_callback:
                 try:
                     response = self.on_skip_callback(username)
@@ -384,6 +434,12 @@ class TwitchBotService(commands.Bot):
             if not has_perm:
                 error_msg = self.i18n.get(error_key, user=username)
                 await message.respond(error_msg)
+                return
+            
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('currentsong', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
                 return
             
             if self.on_current_song_callback:
@@ -407,6 +463,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('blacklist', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_blacklist_callback:
                 try:
                     response = self.on_blacklist_callback(username)
@@ -427,6 +489,12 @@ class TwitchBotService(commands.Bot):
             if not has_perm:
                 error_msg = self.i18n.get(error_key, user=username)
                 await message.respond(error_msg)
+                return
+            
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('addblacklist', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
                 return
             
             if not entry:
@@ -455,6 +523,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('removeblacklist', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if not entry:
                 await message.respond(f"@{username} Bitte gib einen Song oder Artist an.")
                 return
@@ -480,6 +554,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('queue', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_queue_callback:
                 try:
                     response = self.on_queue_callback(username)
@@ -499,6 +579,12 @@ class TwitchBotService(commands.Bot):
             if not has_perm:
                 error_msg = self.i18n.get(error_key, user=username)
                 await message.respond(error_msg)
+                return
+            
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('clearqueue', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
                 return
             
             if self.on_clear_queue_callback:
@@ -522,6 +608,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('songinfo', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_song_info_callback:
                 try:
                     response = self.on_song_info_callback(username)
@@ -543,6 +635,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('wrongsong', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_wrong_song_callback:
                 try:
                     response = self.on_wrong_song_callback(username)
@@ -562,6 +660,12 @@ class TwitchBotService(commands.Bot):
             if not has_perm:
                 error_msg = self.i18n.get(error_key, user=username)
                 await message.respond(error_msg)
+                return
+            
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('pauserequests', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
                 return
             
             if self.on_pause_requests_callback:
@@ -586,6 +690,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('resumerequests', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_resume_requests_callback:
                 try:
                     response = self.on_resume_requests_callback(username)
@@ -606,6 +716,12 @@ class TwitchBotService(commands.Bot):
             if not has_perm:
                 error_msg = self.i18n.get(error_key, user=username)
                 await message.respond(error_msg)
+                return
+            
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('pausesr', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
                 return
             
             if self.on_pause_playback_callback:
@@ -630,6 +746,12 @@ class TwitchBotService(commands.Bot):
                 await message.respond(error_msg)
                 return
             
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('resumesr', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
+                return
+            
             if self.on_resume_playback_callback:
                 try:
                     response = self.on_resume_playback_callback(username)
@@ -650,6 +772,12 @@ class TwitchBotService(commands.Bot):
             if not has_perm:
                 error_msg = self.i18n.get(error_key, user=username)
                 await message.respond(error_msg)
+                return
+            
+            # Check cooldown
+            can_execute, remaining = self._check_command_cooldown('srhelp', username)
+            if not can_execute:
+                await message.respond(f"@{username} Bitte warte noch {remaining} Sekunden.")
                 return
             
             if self.on_srhelp_callback:

@@ -94,6 +94,9 @@ class BotGUI(ctk.CTk):
         gui_handler = GUILogHandler(self._log_to_gui)
         logging.getLogger().addHandler(gui_handler)
         
+        # Start periodic Spotify status check (independent of bot status)
+        self._start_spotify_status_polling()
+        
         logger.info("GUI initialized")
     
     def _start_event_loop(self):
@@ -458,38 +461,90 @@ class BotGUI(ctk.CTk):
         self.after(0, self._update_ui_safe)
     
     def _update_spotify_status(self):
-        """Update Spotify connection status indicator."""
-        if not self.bot or not self.bot.spotify:
-            self.spotify_status_lbl.configure(
-                text="❌ Spotify: Nicht verbunden",
-                text_color="#F44336"
-            )
-            return
-        
-        # Check if we have an active device
-        try:
-            future = asyncio.run_coroutine_threadsafe(
-                self.bot.spotify.get_playback_state(),
-                self.bot._main_loop
-            )
-            state = future.result(timeout=3)
-            
-            if state:
-                self.spotify_status_lbl.configure(
-                    text="✅ Spotify: Verbunden",
-                    text_color="#4CAF50"
+        """Update Spotify connection status indicator (independent check)."""
+        # Check via Spotify API if bot is running
+        if self.bot and self.bot.spotify:
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    self.bot.spotify.get_playback_state(),
+                    self.bot._main_loop
                 )
+                state = future.result(timeout=2)
+                
+                # If we got a state back, Spotify is accessible via API
+                if state:
+                    # Check if there's an active playback device
+                    if state.device_id or self.bot.spotify._device_id:
+                        self.spotify_status_lbl.configure(
+                            text="✅ Spotify: Verbunden",
+                            text_color="#4CAF50"
+                        )
+                    else:
+                        # Spotify is open but no active device - still connected!
+                        self.spotify_status_lbl.configure(
+                            text="✅ Spotify: Bereit",
+                            text_color="#4CAF50"
+                        )
+                    return
+                # If state is None, Spotify might not be running - fall through to process check
+            except Exception:
+                # API call failed - fall through to process check
+                pass
+        
+        # Fallback: Check if Spotify process is running (works without bot)
+        try:
+            import psutil
+            spotify_running = False
+            
+            # Look specifically for Spotify.exe (main application) with a window
+            for proc in psutil.process_iter(['name', 'exe']):
+                try:
+                    if proc.info['name'] and proc.info['name'].lower() == 'spotify.exe':
+                        # Found main Spotify process - check if it has meaningful memory usage
+                        # (indicates it's actually running, not just a stub)
+                        if proc.memory_info().rss > 10 * 1024 * 1024:  # > 10 MB
+                            spotify_running = True
+                            break
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            if spotify_running:
+                if not self.bot:
+                    self.spotify_status_lbl.configure(
+                        text="⏸️ Spotify: Läuft (Bot offline)",
+                        text_color="#FFB300"
+                    )
+                else:
+                    # Bot is running but API check failed - Spotify might not be authenticated
+                    self.spotify_status_lbl.configure(
+                        text="⚠️ Spotify: Authentifizierung nötig",
+                        text_color="#FF9800"
+                    )
             else:
                 self.spotify_status_lbl.configure(
-                    text="⚠️ Spotify: Bitte starten!",
-                    text_color="#FF9800"
+                    text="❌ Spotify: Nicht geöffnet",
+                    text_color="#F44336"
                 )
-        except Exception:
-            # Spotify not responding or not running
+        except Exception as e:
+            logger.debug(f"Error checking Spotify process: {e}")
             self.spotify_status_lbl.configure(
-                text="⚠️ Spotify: Bitte starten!",
-                text_color="#FF9800"
+                text="❓ Spotify: Status unbekannt",
+                text_color="#888"
             )
+    
+    def _start_spotify_status_polling(self):
+        """Start periodic Spotify status check."""
+        def poll():
+            try:
+                self._update_spotify_status()
+            except Exception as e:
+                logger.debug(f"Error in Spotify status polling: {e}")
+            finally:
+                # Schedule next check in 5 seconds
+                self.after(5000, poll)
+        
+        # Start polling
+        poll()
     
     def _update_ui_safe(self):
         """Update UI (thread-safe)."""
@@ -502,12 +557,6 @@ class BotGUI(ctk.CTk):
             text="✅ Requests Aktiv" if not requests_paused else "⏸️ Requests Pausiert",
             text_color="#4CAF50" if not requests_paused else "#FF9800"
         )
-        
-        # Update Spotify status indicator
-        self._update_spotify_status()
-        
-        # Update Spotify status indicator
-        self._update_spotify_status()
         
         # Update now playing
         current = self.bot.current_track

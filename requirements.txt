@@ -12,6 +12,7 @@ twitchio>=3.1.0
 # HTTP Requests
 requests>=2.31.0
 aiohttp>=3.9.0  # For OBS overlay WebSocket server
+psutil>=5.9.0  # For Spotify process detection
 
 # Configuration & Validation
 pydantic>=2.0.0

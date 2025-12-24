@@ -23,7 +23,7 @@ git commit -m "Initial commit - Twitch SR Bot v0.9.0"
 
 ### 2. GitHub Repository erstellen
 
-1. Gehe zu https://github.com/new
+1. Gehe zu <https://github.com/new>
 2. Repository Name: `TwitchSRBot` (oder ein anderer Name)
 3. Description: "Modern Spotify Song Request Bot for Twitch with EventSub, GUI and Permission System"
 4. **Wichtig**: NICHT "Initialize with README" anklicken (haben wir schon!)
@@ -46,6 +46,7 @@ git push -u origin main
 ## 📝 Was ist im Repository?
 
 ### ✅ Included (sicher zum Upload)
+
 - Gesamter Source Code (src/)
 - UI-Komponenten (CustomTkinter)
 - Dokumentation (README.md, INSTALL.md, BUILD.md, TROUBLESHOOTING.md)
@@ -56,10 +57,11 @@ git push -u origin main
 - LICENSE (MIT)
 
 ### ❌ Excluded (in .gitignore)
+
 - config_premium.json (deine persönliche Config!)
 - .cache* (Spotify Token Cache)
 - logs/ (Log-Dateien)
-- __pycache__/ (Python Cache)
+- **pycache**/ (Python Cache)
 - test_twitch.py (Test-Datei mit Env-Vars)
 - build/, dist/ (Build-Artefakte)
 - .env (persönliche Environment Variables)
@@ -72,6 +74,7 @@ git push -u origin main
    - Prüfe ob keine Tokens/Secrets sichtbar sind
 
 2. **Release erstellen** (optional):
+
    ```bash
    # .exe bauen
    python build.py
@@ -82,6 +85,7 @@ git push -u origin main
    ```
 
 3. **Repository Topics hinzufügen** (auf GitHub):
+
    - `twitch-bot`
    - `spotify-api`
    - `twitchio`
@@ -99,7 +103,7 @@ git push -u origin main
 
 ## 🆘 Falls etwas schiefgeht
 
-### Versehentlich Secrets gepusht?
+### Versehentlich Secrets gepusht
 
 ```bash
 # Letzte Commits rückgängig machen (VORSICHT!)
@@ -112,15 +116,17 @@ git push --force
 ```
 
 **WICHTIG**: Wenn Tokens öffentlich waren, sofort:
+
 1. Twitch App → Reset Client Secret
 2. Spotify App → Reset Client Secret  
 3. Neue OAuth Tokens generieren
 
-## ✨ Fertig!
+## ✨ Fertig
 
 Dein Bot ist jetzt ready für GitHub! 🎉
 
 Nach dem Upload kannst du:
+
 - Issues für Feature-Requests nutzen
 - Wiki für erweiterte Docs erstellen
 - GitHub Projects für Roadmap nutzen

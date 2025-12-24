@@ -100,6 +100,26 @@ class CommandPermissions(BaseModel):
     resumesr: CommandPermission = Field(default=CommandPermission.MODERATORS, description="Who can resume playback")
 
 
+class CommandCooldowns(BaseModel):
+    """Cooldown configuration for chat commands (in seconds)."""
+    
+    sr: int = Field(default=0, ge=0, description="Cooldown for !sr command (seconds, 0 = disabled)")
+    skip: int = Field(default=5, ge=0, description="Cooldown for !skip command (seconds, 0 = disabled)")
+    currentsong: int = Field(default=10, ge=0, description="Cooldown for !currentsong/!song command (seconds, 0 = disabled)")
+    blacklist: int = Field(default=10, ge=0, description="Cooldown for !blacklist command (seconds, 0 = disabled)")
+    addblacklist: int = Field(default=5, ge=0, description="Cooldown for !addblacklist command (seconds, 0 = disabled)")
+    removeblacklist: int = Field(default=5, ge=0, description="Cooldown for !removeblacklist command (seconds, 0 = disabled)")
+    queue: int = Field(default=10, ge=0, description="Cooldown for !queue command (seconds, 0 = disabled)")
+    clearqueue: int = Field(default=10, ge=0, description="Cooldown for !clearqueue command (seconds, 0 = disabled)")
+    wrongsong: int = Field(default=5, ge=0, description="Cooldown for !wrongsong command (seconds, 0 = disabled)")
+    songinfo: int = Field(default=10, ge=0, description="Cooldown for !songinfo command (seconds, 0 = disabled)")
+    srhelp: int = Field(default=30, ge=0, description="Cooldown for !srhelp command (seconds, 0 = disabled)")
+    pauserequests: int = Field(default=5, ge=0, description="Cooldown for !pauserequests command (seconds, 0 = disabled)")
+    resumerequests: int = Field(default=5, ge=0, description="Cooldown for !resumerequests command (seconds, 0 = disabled)")
+    pausesr: int = Field(default=5, ge=0, description="Cooldown for !pausesr command (seconds, 0 = disabled)")
+    resumesr: int = Field(default=5, ge=0, description="Cooldown for !resumesr command (seconds, 0 = disabled)")
+
+
 class BotConfig(BaseModel):
     """Main bot configuration."""
     
@@ -109,6 +129,7 @@ class BotConfig(BaseModel):
     rules: RulesConfig = Field(default_factory=RulesConfig)
     blacklist: BlacklistConfig = Field(default_factory=BlacklistConfig)
     command_permissions: CommandPermissions = Field(default_factory=CommandPermissions)
+    command_cooldowns: CommandCooldowns = Field(default_factory=CommandCooldowns)
     smart_voting_enabled: bool = Field(default=True, description="Enable vote-based queue sorting")
     requests_paused: bool = Field(default=False, description="Whether song requests are currently paused")
     

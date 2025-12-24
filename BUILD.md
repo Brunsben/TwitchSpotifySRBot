@@ -4,18 +4,21 @@
 
 1. **Python installieren** (falls noch nicht geschehen)
 2. **Alle Dependencies installieren:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **PyInstaller installieren:**
+3\. **PyInstaller installieren:**
+
 ```bash
 pip install pyinstaller
 ```
 
 ## Build erstellen
 
-### Einfachste Methode:
+### Einfachste Methode
+
 ```bash
 pyinstaller TwitchSRBot.spec
 ```
@@ -23,6 +26,7 @@ pyinstaller TwitchSRBot.spec
 **Das war's!** Die fertige `.exe` ist in `dist/TwitchSRBot.exe`
 
 ### Alternative: Manueller Befehl
+
 ```bash
 pyinstaller --name=TwitchSRBot ^
     --onefile ^
@@ -38,7 +42,8 @@ pyinstaller --name=TwitchSRBot ^
 ## Ergebnis
 
 Die fertige `.exe` Datei befindet sich in:
-```
+
+```text
 dist/TwitchSRBot.exe
 ```
 
@@ -57,21 +62,26 @@ Diese Datei ist **standalone** und kann ohne Python-Installation ausgeführt wer
 
 ## Troubleshooting
 
-**"pyinstaller: command not found"**
+### "pyinstaller: command not found"
+
 ```bash
 python -m PyInstaller TwitchSRBot.spec
 ```
 
-**Build schlägt fehl**
+### Build schlägt fehl
+
 - Stelle sicher dass alle Dependencies installiert sind
 - Versuche: `pip install -r requirements.txt --upgrade`
 
-**CustomTkinter Theme fehlt**
+### CustomTkinter Theme fehlt
+
 - Das sollte durch `--collect-all=customtkinter` gelöst sein
 - Falls nicht: Kopiere `customtkinter` Ordner manuell in dist
 
-**Sehr große .exe (>100MB)**
+### Sehr große .exe (>100MB)
+
 - Das ist normal! Python + GUI + alle Libraries
 - Alternative: Verwende `--onedir` statt `--onefile`
+
   - Mehrere Dateien, aber schnellerer Start
   - Ändere in .spec: `onefile=False`

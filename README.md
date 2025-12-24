@@ -1,6 +1,6 @@
 # 🎵 Twitch SR Bot
 
-![Version](https://img.shields.io/badge/version-0.9.9-green.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![TwitchIO](https://img.shields.io/badge/TwitchIO-3.1.0-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -11,9 +11,9 @@ Moderner EventSub-basierter Twitch Song Request Bot mit Spotify-Integration. Zus
 
 ## ✨ Features
 
-- 🎤 **Song Requests**: Chat-basierte Song-Wünsche (`!sr`)
-- �️ **Smart Voting**: Mehrfach gewünschte Songs steigen in der Queue auf
-- �🔐 **Berechtigungssystem**: 
+- 👤 **Song Requests**: Chat-basierte Song-Wünsche (`!sr`)
+- 💯 **Smart Voting**: Mehrfach gewünschte Songs steigen in der Queue auf
+- 🔐 **Berechtigungssystem**:
   - Alle User
   - Nur Follower (mit Twitch API Verifikation)
   - Nur Subscriber
@@ -51,13 +51,15 @@ python app.py
 ## 📋 Voraussetzungen
 
 ### Für Twitch
-- Twitch Developer App ([dev.twitch.tv/console](https://dev.twitch.tv/console))
+
+- Twitch Developer App ([dev.twitch.tv/console](<https://dev.twitch.tv/console>))
 - OAuth Redirect URL: `http://localhost:3000`
 - Scopes: `user:read:chat`, `user:write:chat`, `user:bot`
 
 ### Für Spotify
+
 - **Spotify Premium Account** (erforderlich für Playback-Steuerung!)
-- Spotify Developer App ([developer.spotify.com](https://developer.spotify.com/dashboard))
+- Spotify Developer App ([developer.spotify.com](<https://developer.spotify.com/dashboard>))
 - Redirect URI: `http://localhost:8888/callback`
 
 **Detaillierte Anleitung**: [INSTALL.md](INSTALL.md)
@@ -67,7 +69,8 @@ python app.py
 ### Chat Commands
 
 #### 👥 Für alle User (EVERYONE)
-```
+
+```text
 !sr <Songname>          - Sucht und fügt Song hinzu
 !sr <Spotify-Link>      - Fügt Song direkt hinzu
 !currentsong / !song    - Zeigt aktuellen Song
@@ -79,7 +82,8 @@ python app.py
 ```
 
 #### 🔨 Für Moderatoren (MODERATORS)
-```
+
+```text
 !skip                   - Überspringt aktuellen Song
 !clearqueue             - Löscht komplette Queue
 !pauserequests          - Pausiert Song Requests
@@ -93,7 +97,8 @@ python app.py
 **Hinweis**: Alle Permissions können individuell konfiguriert werden!
 
 **Beispiele:**
-```
+
+```text
 !sr Never Gonna Give You Up
 !sr https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT
 !songinfo
@@ -111,7 +116,7 @@ python app.py
 
 ## 🏗️ Architektur
 
-```
+```text
 TwitchSpotifySRBot/
 ├── app.py                    # Einstiegspunkt
 ├── requirements.txt          # Dependencies
@@ -140,17 +145,20 @@ TwitchSpotifySRBot/
 ## 🔧 Einstellungen
 
 ### Command Permissions (NEU in v0.9.9)
+
 - **5-Tier System**: EVERYONE, FOLLOWERS, SUBSCRIBERS, MODERATORS, BROADCASTER
 - **15 Commands**: Jeder Command individuell konfigurierbar
 - **GUI-Verwaltung**: Settings-Tab → "Commands" mit Dropdown-Menüs
 - **Flexible Kontrolle**: Bestimme genau, wer welche Commands nutzen darf
 
 ### Anti-Spam & Cooldowns (NEU in v0.9.9)
+
 - **User-Cooldown**: Wartezeit zwischen Requests pro User (Standard: 3 Min., 0 = aus)
 - **Song-Cooldown**: Wartezeit bis Song erneut gewünscht werden kann (Standard: 15 Min., 0 = aus)
 - **Bypass**: Moderatoren und Broadcaster ignorieren Cooldowns
 
 ### Blacklist (NEU in v0.9.9)
+
 - **Songs blockieren**: Verhindere bestimmte Tracks
 - **Artists blockieren**: Sperre komplette Künstler
 - **Partial Matching**: Automatische Namens-Erkennung
@@ -158,17 +166,20 @@ TwitchSpotifySRBot/
 - **Verwaltung**: Via GUI oder Chat-Commands
 
 ### Berechtigungen
+
 - **Alle**: Jeder kann Songs wünschen
 - **Nur Follower**: Twitch API prüft Follower-Status (5 Min. Cache)
 - **Nur Subscriber**: Nur Subs dürfen Requests machen
 
 ### Regeln & Limits
+
 - **Max. Queue**: Warteschlangengröße (z.B. 10)
 - **Max. pro User**: Songs gleichzeitig pro User (z.B. 2)
 - **Max. Länge**: Song-Dauer in Minuten (z.B. 8)
 - **Duplicate Detection**: Verhindert doppelte Songs (wenn Smart Voting aus)
 
 ### Autopilot
+
 - **Zweck**: Spielt Musik wenn Queue leer
 - **Setup**: Link zu **öffentlicher** Spotify Playlist
 - Wechselt automatisch zwischen Requests und Autopilot
@@ -185,6 +196,7 @@ TwitchSpotifySRBot/
 ### Was ist EventSub?
 
 TwitchIO 3.x nutzt **EventSub über WebSocket** statt IRC:
+
 - ✅ Offizielle Twitch API
 - ✅ Moderne OAuth2-Authentifizierung
 - ✅ Bessere Skalierbarkeit
@@ -208,27 +220,32 @@ Details: [BUILD.md](BUILD.md)
 ## 🐛 Troubleshooting
 
 ### Bot empfängt keine Nachrichten
+
 - ✅ Prüfe OAuth Scopes (`user:read:chat`, `user:write:chat`, `user:bot`)
 - ✅ Erstelle neuen Token mit korrekten Scopes
 - ✅ TwitchIO 3.x benötigt EventSub-Authentifizierung
 
 ### Spotify nicht verbunden
+
 - ✅ **GUI Statusanzeige beachten**: "⚠️ Spotify: Bitte starten!" bedeutet Spotify läuft nicht
 - ✅ Spotify muss auf einem Gerät aktiv sein (PC, Handy, Browser)
 - ✅ **Premium Account erforderlich** für Playback-Steuerung
 - ✅ Prüfe Spotify API Credentials in Settings
 
 ### Commands funktionieren nicht
+
 - ✅ **Permissions prüfen**: Settings → Commands Tab
 - ✅ Jeder Command hat eigene Permission-Level
 - ✅ Standard: Moderator-Commands nur für Mods, User-Commands für alle
 
 ### Follower-Check funktioniert nicht
+
 - ✅ Twitch App benötigt zusätzliche Permissions
 - ✅ Cache wird alle 5 Minuten aktualisiert
 - ✅ Prüfe Logs für API-Fehler
 
 ### Autopilot spielt nicht
+
 - ✅ Playlist muss **ÖFFENTLICH** sein
 - ✅ Spotify muss aktiv sein (auf irgendeinem Gerät)
 - ✅ Premium Account erforderlich
@@ -238,6 +255,7 @@ Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 ## 📝 Changelog
 
 ### v0.9.9 (2025-12-23)
+
 - 🎉 **MAJOR**: Flexible Command Permission System
   - 5-Tier Levels: EVERYONE → FOLLOWERS → SUBSCRIBERS → MODERATORS → BROADCASTER
   - Per-Command Configuration: 15 commands individually configurable
@@ -258,6 +276,7 @@ Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - 🌍 **i18n Complete**: Full German/English translations for all features
 
 ### v0.9.8 (2025-12-15)
+
 - 📊 **NEW**: Song History & Statistics tracking system
   - Track all played songs with timestamps and requesters
   - Top Songs, Top Requesters, Top Artists tabs
@@ -265,7 +284,7 @@ Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
   - CSV/JSON export functionality
   - Statistics overview with skip rate and autopilot percentage
 - 🎥 **NEW**: OBS Overlay for streaming
-  - Real-time WebSocket-based overlay at http://localhost:8080
+  - Real-time WebSocket-based overlay at <http://localhost:8080>
   - Shows current song with cover art, artist, and requester
   - Beautiful gradient design (Twitch purple to Spotify green)
   - Smooth animations for song changes
@@ -274,27 +293,32 @@ Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - 🔧 Internal: Song model extended with cover_url field
 
 ### v0.9.7 (2025-12-14)
+
 - ✨ New custom icon with Twitch + Spotify branding (purple & green)
 - 🐛 Fixed autopilot/fallback playlist not starting in .exe builds
 - ⚡ Improved window closing - instant response with background cleanup
 - 🎨 Icon now visible in taskbar and on .exe file
 
 ### v0.9.6 (2025-12-14)
+
 - 🐛 Fixed 'lost sys.stdin' error in PyInstaller builds
 - ✅ Improved graceful shutdown when closing app while bot is running
 - 🔧 Better async cleanup and error handling on exit
 
 ### v0.9.5 (2025-12-14)
+
 - 🐛 Fixed browser window stealing focus on bot startup
 - 🔧 Added global webbrowser patch to prevent focus theft
 - 🔗 Fixed Help window links to use autoraise=False
 
 ### v0.9.4 (2025-12-13)
+
 - 📖 Comprehensive Smart Voting documentation
 - 📚 Added detailed help section explaining voting system
 - 🎯 Updated README with Smart Voting feature
 
 ### v0.9.3 (2025-12-13)
+
 - ✨ Added !skip command (Broadcaster/Moderator only)
 - ✨ Added !currentsong / !song command (all users)
 - 🔒 Browser no longer steals focus during OAuth (prevents token leaks)
@@ -302,15 +326,18 @@ Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - 🎯 Username mentions in command responses
 
 ### v0.9.2 (2025-12-13)
+
 - 🎮 Initial implementation of new chat commands
 - 🐛 Bug fixes and improvements
 
 ### v0.9.1 (2025-12-13)
+
 - 🐛 Fixed PyInstaller resource paths
 - 📖 Comprehensive help documentation
 - ✅ All locales load correctly in .exe
 
 ### v0.9.0 (2025-12-13)
+
 - ✨ Complete refactor from monolithic to modular architecture
 - 🔄 Migration to TwitchIO 3.x EventSub
 - 🔐 Permission system (all/followers/subscribers)
@@ -322,6 +349,7 @@ Weitere Hilfe: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - 📦 PyInstaller build system
 
 ### Legacy (Pre-v0.9.0)
+
 - Original monolithic implementation
 - TwitchIO 2.x IRC-based
 
@@ -331,19 +359,19 @@ MIT License - siehe [LICENSE](LICENSE)
 
 ## 👤 Autor
 
-**uprisin6**  
-GitHub: [@Brunsben](https://github.com/Brunsben)
+**uprisin6**
+GitHub: [@Brunsben](<https://github.com/Brunsben>)
 
 ## 🙏 Credits
 
-- [TwitchIO](https://github.com/TwitchIO/TwitchIO) - EventSub WebSocket Integration
-- [Spotipy](https://github.com/spotipy-dev/spotipy) - Spotify Web API
-- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) - Modern GUI
-- [Pydantic](https://github.com/pydantic/pydantic) - Data Validation
+- [TwitchIO](<https://github.com/TwitchIO/TwitchIO>) - EventSub WebSocket Integration
+- [Spotipy](<https://github.com/spotipy-dev/spotipy>) - Spotify Web API
+- [CustomTkinter](<https://github.com/TomSchimansky/CustomTkinter>) - Modern GUI
+- [Pydantic](<https://github.com/pydantic/pydantic>) - Data Validation
 
 ## 🔗 Links
 
-- 📦 [Releases](https://github.com/Brunsben/TwitchSpotifySRBot/releases)
+- 📦 [Releases](<https://github.com/Brunsben/TwitchSpotifySRBot/releases>)
 - 📖 [Installation Guide](INSTALL.md)
 - 🔨 [Build Instructions](BUILD.md)
 - 🐛 [Troubleshooting](TROUBLESHOOTING.md)
@@ -351,4 +379,4 @@ GitHub: [@Brunsben](https://github.com/Brunsben)
 
 ---
 
-**Viel Spaß beim Streamen! 🎵**
+### Viel Spaß beim Streamen! 🎵

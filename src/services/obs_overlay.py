@@ -148,10 +148,10 @@ class OBSOverlayServer:
             display: flex;
             align-items: center;
             padding: 20px;
-            background: linear-gradient(135deg, rgba(145, 70, 255, 0.95) 0%, rgba(30, 215, 96, 0.95) 100%);
+            background: linear-gradient(135deg, #181818 0%, #282828 100%);
             border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
+            border: 2px solid #1DB954;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(29, 185, 84, 0.2);
             max-width: 600px;
             animation: slideIn 0.5s ease-out;
         }
